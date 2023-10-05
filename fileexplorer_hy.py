@@ -11,6 +11,17 @@ dirLabel, dirListBox, fileListBox = None, None, None # 윈도창에 나올 위�
 
 ## 함수 선언 부분 ##
 
+def search_button_click():
+    #디렉터리 내의 파일 or 폴더 탐색
+    global currentDir, searchDirList
+    directory_search = entry.get()
+    searchDirList.append(currentDir+directory_search+'\\')
+    currentDir = directory_search
+    fillListBox()
+    # 만약 \users\gpdus인 경우 \까지 검색하고 뒤에 꺼 검색 또 해야함.
+    
+
+
 def clickListBox(evt):
     global currentDir, searchDirList
     if (dirListBox.curselection() == ()):  # 다른 리스트 박스를 클릭할 때는 무시함.
@@ -82,11 +93,20 @@ if __name__ == "__main__":
     dirLabel = Label(window, text=currentDir) # 위쪽 현재 폴더의 전체 경로 출력
     dirLabel.pack()
 
-    dirListBox = Listbox(window) # 왼족 현재 폴더의 하위 폴더 목록을 보여 주는 리스트 박스
+    # 검색 기능
+    entry = Entry(window, width=30)
+    entry.pack()
+
+    search_button = Button(window, text="Search Path", command=search_button_click)
+    search_button.pack()
+
+     # 왼족. 현재 폴더의 하위 폴더 목록을 보여 주는 리스트 박스
+    dirListBox = Listbox(window)
     dirListBox.pack(side=LEFT, fill=BOTH, expand=1)
     dirListBox.bind('<<ListboxSelect>>', clickListBox)
 
-    fileListBox = Listbox(window) # 왼족 현재 폴더의 파일 목록을 보여주는 리스트 박스
+    # 오른쪽. 현재 폴더의 파일 목록을 보여주는 리스트 박스
+    fileListBox = Listbox(window) 
     fileListBox.pack(side=RIGHT, fill=BOTH, expand=1)
 
     fillListBox()   # 초기엔 C:\\의 모든 폴더 목록을 만들기
