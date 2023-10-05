@@ -10,14 +10,17 @@ currentDir = 'C:\\'
 dirLabel, dirListBox, fileListBox = None, None, None # 윈도창에 나올 위젯 변수들
 
 ## 함수 선언 부분 ##
-
+#흐음 서치문 헷갈리네
 def search_button_click():
     #디렉터리 내의 파일 or 폴더 탐색
     global currentDir, searchDirList
-    directory_search = entry.get()
-    searchDirList.append(currentDir+directory_search+'\\')
-    currentDir = directory_search
-    fillListBox()
+    entryList =  entry.get().split("/")
+    for i in  range(len(entryList)):
+        directory_search = entry.get().split("/")[i]
+        #경로가 드라이브 경로인지도 검사해야하지 않을까???
+        searchDirList.append(currentDir+directory_search+'\\')
+        currentDir = directory_search
+        fillListBox()
     # 만약 \users\gpdus인 경우 \까지 검색하고 뒤에 꺼 검색 또 해야함.
     
 
@@ -110,5 +113,3 @@ if __name__ == "__main__":
     fileListBox.pack(side=RIGHT, fill=BOTH, expand=1)
 
     fillListBox()   # 초기엔 C:\\의 모든 폴더 목록을 만들기
-
-    window.mainloop()
