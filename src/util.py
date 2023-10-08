@@ -1,12 +1,12 @@
 #[TITLE] Utility
 #[DESC] CyberHawk에서 사용하는 기능들 구현
-#       현재 기능: ls, mkdir, rm, touch, cp, mv
+#       현재 기능: ls, mkdir, rm, touch, cp, mv, file_sig
 #[Writer] 
 
 import enum
 import os
 import shutil
-
+import binwalk
 
 def ls():
     current_directory = os.getcwd()
@@ -59,3 +59,14 @@ def mv(args):
         print(f"'{source}'가 '{destination}'로 이동되었습니다.")
     except Exception as e:
         print(f"이동 중 오류 발생: {e}")
+
+
+def file_sig(args): #파일 시그니쳐 출력 함수   ex) file_sig("filename") 
+    try:
+        if(os.path.isfile(args)):
+            binwalk.scan(args,signature=True)
+        else:
+            raise Exception("파일이 아닙니다.")
+    except Exception as e:
+        print(f"binwalk 오류 발생: {e}")
+
