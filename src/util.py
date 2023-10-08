@@ -7,7 +7,55 @@ import enum
 import os
 import shutil
 import binwalk
-import checkFileSignature as cf
+
+# 파일 시그니처와 파일 확장자를 쌍으로 미리 저장
+# 텍스트 파일의 형식은 별도의 처리를 위해 따로 저장
+fileSignatureList = [(".exe", "4D 5A"), (".msi", "23 20"), (".png", "89 50 4E 47 0D 0A 1A 0A"), (".zip", "50 4B 03 04")]
+fileSignatureListIndex = [fileSignatureList[i][0] for i in range(len(fileSignatureList))]
+textfile = [".py", ".txt"]
+
+# 출력문자 색상 변경
+formatters = {
+    'Red': '\033[91m',
+    'Green': '\033[92m',
+    'Blue': '\033[94m',
+    'END': '\033[0m'
+}
+
+# 색을 입혀 출력하는 함수
+def printlog(content, color):
+    if color == 'Green':
+        print('{Green}'.format(**formatters) + str(content) + '{END}'.format(**formatters))
+    elif color == 'Blue':
+        print('{Blue}'.format(**formatters) + str(content) + '{END}'.format(**formatters))
+    else:
+        print('{Red}'.format(**formatters) + str(content) + '{END}'.format(**formatters))
+
+def checkFileSignature(fileExt, file):
+    if fileExt == '':
+        print(file, end='')
+        printlog("[UnknownType]", "Blue")
+        return
+    if fileExt in textfile:
+        print(file)
+        return
+
+    with open(file, mode='rb') as f:
+        binaryData = f.read(20)
+        binaryDataString = ["{:02x}".format(x) for x in binaryData]
+
+    if fileExt in fileSignatureListIndex:
+        index = fileSignatureListIndex.index(fileExt)
+        datastream = binaryDataString[0:len(fileSignatureList[index][1].split(' '))]
+        fileSignature = fileSignatureList[index][1].lower().split(' ')
+        if datastream == fileSignature:
+            print(file)
+        else:
+            print(file, end='')
+            printlog("[InproperFileExtension]", "Red")
+    else:
+        print(file, end='')
+        printlog("[InproperFileExtension]", "Red")
 
 def ls():
     current_directory = os.getcwd()
@@ -18,7 +66,7 @@ def ls():
         print(file)
     elif os.path.isfile(file):
         fileExt = os.path.splitext(file)[1]
-        cf.checkFileSignature(fileExt, file)
+        checkFileSignature(fileExt, file)
 
 def mkdir(args):
     try:
