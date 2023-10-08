@@ -7,13 +7,18 @@ import enum
 import os
 import shutil
 import binwalk
+import checkFileSignature as cf
 
 def ls():
     current_directory = os.getcwd()
     files = os.listdir(current_directory)
     print("현재 디렉토리 내의 파일 목록:")
     for file in files:
+    if os.path.isdir(file):
         print(file)
+    elif os.path.isfile(file):
+        fileExt = os.path.splitext(file)[1]
+        cf.checkFileSignature(fileExt, file)
 
 def mkdir(args):
     try:
