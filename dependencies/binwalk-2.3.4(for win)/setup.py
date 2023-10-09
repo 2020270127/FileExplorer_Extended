@@ -108,7 +108,7 @@ class IDAUnInstallCommand(Command):
     def initialize_options(self):
         self.idadir = None
         self.mydir = os.path.join(os.path.dirname(
-            os.path.realpath(__file__)), "dependencies\\binwalk-2.3.4(for win)\\src")
+            os.path.realpath(__file__)), "src")
 
     def finalize_options(self):
         pass
@@ -139,7 +139,7 @@ class IDAInstallCommand(Command):
     def initialize_options(self):
         self.idadir = None
         self.mydir = os.path.join(os.path.dirname(
-            os.path.realpath(__file__)), "dependencies\\binwalk-2.3.4(for win)\\src")
+            os.path.realpath(__file__)), "src")
 
     def finalize_options(self):
         pass
@@ -337,12 +337,12 @@ setup(
     url="https://github.com/ReFirmLabs/%s" % MODULE_NAME,
     requires=[],
     python_requires=">=3",
-    package_dir={"": "dependencies\\binwalk-2.3.4(for win)\\src"},
+    package_dir={"": "src"},
     packages=[MODULE_NAME],
     package_data={MODULE_NAME: install_data_files},
     scripts=[
         os.path.join(
-            "dependencies\\binwalk-2.3.4(for win)\\src",
+            "src",
             "scripts",
             SCRIPT_NAME)],
     cmdclass={
