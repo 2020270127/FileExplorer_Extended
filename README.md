@@ -16,6 +16,6 @@ This project was conducted in 20232R, AICS306(System Security).
 
 ## Installation
 ```
-pip install -r requirements.txt
+install_requirements.bat
 python src/CyberHawk.py
 ```
