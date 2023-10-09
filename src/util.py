@@ -7,6 +7,8 @@ import enum
 import os
 import shutil
 import binwalk
+import hashlib
+
 import Sort # sort 함수 동작을 위한 자체 제작 라이브러리
 
 # 파일 시그니처와 파일 확장자를 쌍으로 미리 저장
@@ -123,6 +125,7 @@ def file_sig(args): #파일 시그니쳐 출력 함수   ex) file_sig("filename"
             raise Exception("파일이 아닙니다.")
     except Exception as e:
         print(f"binwalk 오류 발생: {e}")
+        
 
 '''
 * Name : sort
@@ -188,3 +191,44 @@ def sort(args):
         print('잘못된 명령어입니다.')
     #except :
         #print('에러 발생.')
+
+'''
+* Name : filehash
+
+* Description : 파일의 MD5, SHA256, SHA1 해시를 계산하는 함수
+                ex) filehash('CyberHawk.py')
+
+* Arguments : 해시를 계산할 파일의 경로가 전달됨 (param file_path)
+
+* Change Date : 2023. 10. 09
+
+'''
+def filehash(file_path):
+    try:
+        with open(file_path, 'rb') as file:
+            md5_hash = hashlib.md5()
+            sha256_hash = hashlib.sha256()
+            sha1_hash = hashlib.sha1()
+
+            while True:
+                data = file.read(65536)  # 파일을 64KB 블록으로 읽음
+                if not data:
+                    break
+
+                md5_hash.update(data)
+                sha256_hash.update(data)
+                sha1_hash.update(data)
+
+            # 해시 값을 16진수로 반환
+            hashes = {
+                'md5': md5_hash.hexdigest(),
+                'sha256': sha256_hash.hexdigest(),
+                'sha1': sha1_hash.hexdigest()
+            }
+
+            print(hashes)
+            #return hashes
+        
+    except FileNotFoundError:
+        raise FileNotFoundError(f"파일을 찾을 수 없습니다: {file_path}")
+
