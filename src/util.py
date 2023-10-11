@@ -2,11 +2,10 @@
 #[DESC] CyberHawk에서 사용하는 기능들 구현
 #       현재 기능: ls, mkdir, rm, touch, cp, mv, file_sig, sort
 #[Writer] 
-
+import subprocess
 import enum
 import os
 import shutil
-import binwalk
 import hashlib
 import requests
 import Sort # sort 함수 동작을 위한 자체 제작 라이브러리
@@ -116,11 +115,19 @@ def mv(args):
     except Exception as e:
         print(f"이동 중 오류 발생: {e}")
 
-
 def file_sig(args): #파일 시그니쳐 출력 함수   ex) file_sig("filename") 
     try:
         if(os.path.isfile(args)):
-            binwalk.scan(args,signature=True)
+            subprocess.run(['wsl', 'python3','bin.py','file_sig' ,args])
+        else:
+            raise Exception("파일이 아닙니다.")
+    except Exception as e:
+        print(f"binwalk 오류 발생: {e}")
+
+def file_ext(args): #파일 시그니쳐 출력 함수   ex) file_sig("filename") 
+    try:
+        if(os.path.isfile(args)):
+            subprocess.run(['wsl', 'python3','bin.py','file_ext' ,args])
         else:
             raise Exception("파일이 아닙니다.")
     except Exception as e:
@@ -269,3 +276,4 @@ def upload_and_get_scan_results(file_name):
             print(f"Error uploading file: {upload_response.status_code} - {upload_response.text}")
     except Exception as e:
         print(f"An error occurred: {str(e)}")
+file_sig("Sort.py")

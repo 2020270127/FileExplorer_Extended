@@ -4,7 +4,7 @@
 
 import os
 import re
-#import pwd 윈도우 버전으로 변경
+import pwd 
 import stat
 import shlex
 import tempfile
@@ -140,7 +140,7 @@ class Extractor(Module):
         if self.enabled is True:
             if self.runas_user is None:
                 # Get some info about the current user we're running under
-                user_info = os.getlogin() #윈도우 버전으로 변경, 원본 : pwd.getpwuid(os.getuid())
+                user_info = pwd.getpwuid(os.getuid())
 
                 # Don't run as root, unless explicitly instructed to
                 if user_info.pw_uid == 0:
@@ -151,7 +151,7 @@ class Extractor(Module):
                 self.runas_gid = user_info.pw_gid
             else:
                 # Run external applications as the specified user
-                user_info = os.path.expanduser("~") #윈도우 버전으로 변경, 원본 : pwd.getpwnam(self.runas_user)
+                user_info = pwd.getpwnam(self.runas_user)
                 self.runas_uid = user_info.pw_uid
                 self.runas_gid = user_info.pw_gid
 
