@@ -8,7 +8,7 @@ import os
 import shutil
 import binwalk
 import hashlib
-
+import requests
 import Sort # sort 함수 동작을 위한 자체 제작 라이브러리
 
 # 파일 시그니처와 파일 확장자를 쌍으로 미리 저장
