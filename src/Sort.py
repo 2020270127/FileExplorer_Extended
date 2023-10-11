@@ -1,7 +1,7 @@
 import enum
 import os
 import shutil
-import requests
+
 from datetime import datetime
 
 '''
