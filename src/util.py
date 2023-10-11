@@ -276,4 +276,3 @@ def upload_and_get_scan_results(file_name):
             print(f"Error uploading file: {upload_response.status_code} - {upload_response.text}")
     except Exception as e:
         print(f"An error occurred: {str(e)}")
-file_sig("Sort.py")
