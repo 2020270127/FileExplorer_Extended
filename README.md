@@ -13,6 +13,7 @@ This project was conducted in 20232R, AICS306(System Security).
 ## Requirements
 - Python 3.11+
 - Windows OS
+- WSL Required
 
 ## Installation
 ```
