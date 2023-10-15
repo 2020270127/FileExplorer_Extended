@@ -9,6 +9,7 @@ import shutil
 import hashlib
 import requests
 import Sort # sort 함수 동작을 위한 자체 제작 라이브러리
+import Cbinwalk as cbin# binwalk 함수 동작을 위한 메크로
 
 # 파일 시그니처와 파일 확장자를 쌍으로 미리 저장
 # 텍스트 파일의 형식은 별도의 처리를 위해 따로 저장
@@ -115,6 +116,22 @@ def mv(args):
     except Exception as e:
         print(f"이동 중 오류 발생: {e}")
 
+def file_sig(args): #파일 시그니쳐 출력 함수   ex) file_sig("filename") 
+    try:
+        if(os.path.isfile(args)):
+            subprocess.run(['wsl', 'python3','bin.py','file_sig' ,args])
+        else:
+            raise Exception("파일이 아닙니다.")
+    except Exception as e:
+        print(f"binwalk 오류 발생: {e}")
+def file_ext(args): #파일 시그니쳐 출력 함수   ex) file_sig("filename") 
+    try:
+        if(os.path.isfile(args)):
+            subprocess.run(['wsl', 'python3','bin.py','file_ext' ,args])
+        else:
+            raise Exception("파일이 아닙니다.")
+    except Exception as e:
+        print(f"binwalk 오류 발생: {e}")
         
 
 '''
@@ -259,3 +276,4 @@ def upload_and_get_scan_results(file_name):
             print(f"Error uploading file: {upload_response.status_code} - {upload_response.text}")
     except Exception as e:
         print(f"An error occurred: {str(e)}")
+

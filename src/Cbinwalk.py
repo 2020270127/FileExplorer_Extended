@@ -2,15 +2,15 @@ import sys
 import os
 import subprocess
 
-if len(sys.argv) >= 3:
-    function = sys.argv[1] #function : 작동 함수 문자
-    arg = sys.argv[2]     #arg     : 함수 인자 
-    file = sys.argv[3]     #file     : 파일명
-    files = sys.argv[3:]     #file     : 파일명 (file_binDiff에서 사용)
-else:
-    print("최소 4개의 인자가 필요합니다.")
+# if len(sys.argv) >= 3:
+#     function = sys.argv[1] #function : 작동 함수 문자
+#     arg = sys.argv[2]     #arg     : 함수 인자 
+#     file = sys.argv[3]     #file     : 파일명
+#     files = sys.argv[3:]     #file     : 파일명 (file_binDiff에서 사용)
+# else:
+#     print("최소 3개의 인자가 필요합니다.")
 
-def file_sig(file): #파일 시그니쳐 스캔 함수 
+def file_sig(function, file, arg=None): #파일 시그니쳐 스캔 함수 
     if function == '-B': #Scan target file(s) for common file signatures
         try:
             if(os.path.isfile(file)):
@@ -83,7 +83,7 @@ def file_sig(file): #파일 시그니쳐 스캔 함수
         except Exception as e:
             print(f"binwalk 오류 발생: {e}")
 
-def file_ext(file): #파일 추출 함수 
+def file_ext(function, file, arg=None): #파일 추출 함수 
     if function == '-e': #Automatically extract known file types
         try:
             if(os.path.isfile(file)):
@@ -183,7 +183,7 @@ def file_ext(file): #파일 추출 함수
         except Exception as e:
             print(f"binwalk 오류 발생: {e}")
 
-def file_ent(file): #파일 엔트로피 스캔 함수
+def file_ent(function, file, arg=None): #파일 엔트로피 스캔 함수
     if function == '-E': #Calculate file entropy
         try:
             if(os.path.isfile(file)):
@@ -247,7 +247,7 @@ def file_ent(file): #파일 엔트로피 스캔 함수
         except Exception as e:
             print(f"binwalk 오류 발생: {e}")
 
-def file_binDiff(files): #파일끼리 차이를 보여주는 함수
+def file_binDiff(function, files, arg=None): #파일끼리 차이를 보여주는 함수, files는 리스트가 와야함
     if function == '-W': #Perform a hexdump / diff of a file or files
         try:
             for file in files:
@@ -314,7 +314,7 @@ def file_binDiff(files): #파일끼리 차이를 보여주는 함수
         except Exception as e:
             print(f"binwalk 오류 발생: {e}")
 
-def file_rawComp(file): #압축 식별 함수
+def file_rawComp(function, file, arg=None): #압축 식별 함수
     if function == '-X': #Scan for raw deflate compression streams
         try:
             if(os.path.isfile(file)):
@@ -351,7 +351,7 @@ def file_rawComp(file): #압축 식별 함수
         except Exception as e:
             print(f"binwalk 오류 발생: {e}")
     
-def file_general(file): #binwalk 기본 함수
+def file_general(function, file, arg=None): #binwalk 기본 함수
     if function == '-l': #Number of bytes to scan
         try:
             if(os.path.isfile(file)):
