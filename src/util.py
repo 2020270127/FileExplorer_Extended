@@ -10,7 +10,7 @@ import hashlib
 import requests
 import Sort # sort 함수 동작을 위한 자체 제작 라이브러리
 import Cbinwalk as cbin# binwalk 함수 동작을 위한 메크로
-
+import time
 # 파일 시그니처와 파일 확장자를 쌍으로 미리 저장
 # 텍스트 파일의 형식은 별도의 처리를 위해 따로 저장
 fileSignatureList = [(".exe", "4D 5A"), (".msi", "23 20"), (".png", "89 50 4E 47 0D 0A 1A 0A"), (".zip", "50 4B 03 04")]
@@ -239,28 +239,27 @@ def filehash(file_path):
     except FileNotFoundError:
         raise FileNotFoundError(f"파일을 찾을 수 없습니다: {file_path}")
 
-def upload_and_get_scan_results(file_name):
+def virus_scan(file_name):
     upload_url = f'https://www.virustotal.com/vtapi/v2/file/scan'
     api_key = 'api 키 입력'
     file_path=os.getcwd()
     file_path+="/"+file_name
     report_url = f'https://www.virustotal.com/vtapi/v2/file/report'
-
     upload_files = {'file': (file_path, open(file_path, 'rb'))}
     upload_params = {'apikey': api_key}
 
     try:
         upload_response = requests.post(upload_url, files=upload_files, params=upload_params)
-
+        upload_response = requests.post(upload_url, files=upload_files, params=upload_params)
         if upload_response.status_code == 200:
             upload_result = upload_response.json()
             scan_id = upload_result.get('scan_id')
             if scan_id:
                 print(f"File uploaded successfully. Scan ID: {scan_id}")
-
+                time.sleep(10)
                 report_params = {'apikey': api_key, 'resource': scan_id}
                 report_response = requests.get(report_url, params=report_params)
-
+                report_response = requests.get(report_url, params=report_params)
                 if report_response.status_code == 200:
                     report_result = report_response.json()
                     if 'scans' in report_result:
