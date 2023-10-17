@@ -96,7 +96,7 @@ def touch(args):
     except Exception as e:
         print(f"파일 생성 중 오류 발생: {e}")
 
-def cp(args):
+def cp(*args):
     source, destination = args
     try:
         if os.path.isdir(source):
@@ -108,7 +108,7 @@ def cp(args):
     except Exception as e:
         print(f"복사 중 오류 발생: {e}")
 
-def mv(args):
+def mv(*args):
     source, destination = args
     try:
         shutil.move(source, destination)
