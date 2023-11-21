@@ -1,15 +1,12 @@
 import os
 import tkinter as tk
+from tkinter import Toplevel, Label, Radiobutton, Button, Entry, messagebox
 from datetime import datetime
-import Cbinwalk
-# from tkinter import ttk
 from functools import partial
 from sys import platform
 import shutil
 import threading
-
 from PIL import Image, ImageTk
-
 import ttkbootstrap as ttk
 from ttkbootstrap.tooltip import ToolTip
 from ttkbootstrap.dialogs.dialogs import Messagebox
@@ -17,7 +14,7 @@ from ttkbootstrap.dialogs.dialogs import Querybox
 import psutil
 
 import ext
-
+import Cbinwalk
 # TODO:
 # Linux compatibility,
 # Add move file function,
@@ -55,6 +52,13 @@ mintyL = "minty"
 morphL = "morph"
 yetiL = "yeti"
 
+#binwalk options
+#scan_var = None
+#extract_var = None
+#entropy_var = None
+#binwalk_arg = None
+#extract_b_arg = None
+#entropy_b_arg = None
 
 def checkPlatform():
     global currDrive, available_drives
@@ -501,9 +505,6 @@ def create_widgets(window):
         command=partial(processes_win, window),
     )
 #####################################################################################
-
-    print("binwalk_config")
-
     binwalk_menu = ttk.Menu(bar, tearoff=False, font=("TkDefaultFont", font_size))
     binwalk_menu.add_command(
         label="Signature Scanner", image=cpu_photo, compound="left", command=binwalk_sigScan
@@ -743,32 +744,116 @@ def cpu_stats():
         title="CPU",
     )
 
-temp_string=['1','2','3']
+files=['1','2','3'] #선택한 파일 목록
 
+## 리스트로 받은 결과들을 파싱한 후, 사용자에게 보여줘야 함. 어떤 방식으로 보여줄지 고민해야 함.
 def binwalk_sigScan(): #배열로 파일 목록을 받아서 순차적으로 실행
-    print("sig_scan")
+    #로딩창 시작
+    binwalk_result = [] #결과를 저장할 리스트 
+    for file in files:
+        Cbinwalk.cbinwalk(f'{(scan_var).get()}', file, binwalk_result)  #tk 객체에서 get 메서드로 값을 가져옴
+    #로딩창 끝 
+    print(binwalk_result)   
+    print("sig_scan end")
 
 def binwalk_extract():
-    Messagebox.ok(
-        message="Usage: "
-        + str(cpu_per)
-        + "%"
-        + "\nLogical Processors: "
-        + str(cpu_count)
-        + "\nCores: "
-        + str(cpu_count_log)
-        + "\nFrequency: "
-        + str(cpu_freq)
-        + " GHz",
-        title="CPU",
-    )
+    binwalk_result = [] #결과를 저장할 리스트 
+    #로딩창 시작
+    for file in files:
+        Cbinwalk.cbinwalk(f'{(extract_var).get()}', file, binwalk_result)
+    #로딩창 끝 
+    print("extract")
 
+## 현재 gui 창을 어떻게 처리할지 고민중 ##
 def binwalk_entropy():
-    print("entropy")
+    binwalk_result = [] #결과를 저장할 리스트
+    #로딩창 시작
+    for file in files:
+        Cbinwalk.cbinwalk(f'{(entropy_var).get()}', file, binwalk_result)
+    #로딩창 끝
+    print(binwalk_result) 
+    print("entropy end")
+
 
 def binwalk_config(window):
-    print("binwalk_config")
+    ## 창 생성 ##
+    settings_window = Toplevel(window)
+    settings_window.title = ("BinWalk Configuration")
 
+    ## 배열 생성 ##
+    Label(settings_window, text="Scan Options:").grid(row=1, column=0, sticky='w')
+    Radiobutton(settings_window, text="Scan target file(s) for common file signatures", variable=scan_var, value="-B").grid(row=2, column=0, sticky='w')
+    Radiobutton(settings_window, text="Scan target file(s) for the specified sequence of bytes <ARGUMENT REQUIRED>", variable=scan_var, value="-R").grid(row=3, column=0, sticky='w')
+    Radiobutton(settings_window, text="Scan target file(s) for common executable opcode signatures", variable=scan_var, value="-A").grid(row=4, column=0, sticky='w')
+    Radiobutton(settings_window, text="Disable smart signature keywords", variable=scan_var, value="-b").grid(row=5, column=0, sticky='w')
+    Radiobutton(settings_window, text="Show results marked as invalid", variable=scan_var, value="-l").grid(row=6, column=0, sticky='w')
+    Radiobutton(settings_window, text="Exclude results that match <ARGUMENT REQUIRED>", variable=scan_var, value="-x").grid(row=7, column=0, sticky='w')
+    Radiobutton(settings_window, text="Only show results that match <ARGUMENT REQUIRED>", variable=scan_var, value="-y").grid(row=8, column=0, sticky='w')
+    
+
+    Label(settings_window, text="Extract Options:").grid(row=1, column=1, sticky='w')
+    Radiobutton(settings_window, text="Automatically extract known file types", variable=extract_var, value="-e").grid(row=2, column=1, sticky='w')
+    Radiobutton(settings_window, text="Recursively scan extracted files", variable=extract_var, value="-M").grid(row=3, column=1, sticky='w')
+    Radiobutton(settings_window, text="Limit matryoshka recursion depth (default: 8 levels deep)", variable=extract_var, value="-d").grid(row=4, column=1, sticky='w')
+    Radiobutton(settings_window, text="Extract files/folders to a custom directory (default: current working directory)", variable=extract_var, value="-C").grid(row=5, column=1, sticky='w')
+    Radiobutton(settings_window, text="Limit the size of each extracted file <ARGUMENT REQUIRED>", variable=extract_var, value="-j").grid(row=6, column=1, sticky='w')
+    Radiobutton(settings_window, text="Limit the number of extracted files <ARGUMENT REQUIRED>", variable=extract_var, value="-n").grid(row=7, column=1, sticky='w')
+    Radiobutton(settings_window, text="Execute external extraction utilities with the specified user's privileges <ARGUMENT REQUIRED>", variable=extract_var, value="-0").grid(row=8, column=1, sticky='w')
+    Radiobutton(settings_window, text="Do not sanitize extracted symlinks that point outside the extraction directory (dangerous)", variable=extract_var, value="-1").grid(row=9, column=1, sticky='w')
+    Radiobutton(settings_window, text="Delete carved files after extraction", variable=extract_var, value="-r").grid(row=10, column=1, sticky='w')
+    Radiobutton(settings_window, text="Carve data from files, but don't execute extraction utilities", variable=extract_var, value="-z").grid(row=11, column=1, sticky='w')
+    Radiobutton(settings_window, text="Extract into sub-directories named by the offset", variable=extract_var, value="-V").grid(row=12, column=1, sticky='w')
+    
+
+    Label(settings_window, text="Entropy Options:").grid(row=1, column=2, sticky='w')
+    Radiobutton(settings_window, text="Calculate file entropy", variable=entropy_var, value="-E").grid(row=2, column=2, sticky='w')
+    Radiobutton(settings_window, text="Use faster, but less detailed, entropy analysis", variable=entropy_var, value="-F").grid(row=3, column=2, sticky='w')
+    Radiobutton(settings_window, text="Save plot as a PNG", variable=entropy_var, value="-J").grid(row=4, column=2, sticky='w')
+    Radiobutton(settings_window, text="Omit the legend from the entropy plot graph", variable=entropy_var, value="-Q").grid(row=5, column=2, sticky='w')
+    Radiobutton(settings_window, text="Do not generate an entropy plot graph", variable=entropy_var, value="-N").grid(row=6, column=2, sticky='w')
+    Radiobutton(settings_window, text="Set the rising edge entropy trigger threshold (default: 0.95)", variable=entropy_var, value="-H").grid(row=7, column=2, sticky='w')
+    Radiobutton(settings_window, text=" Set the falling edge entropy trigger threshold (default: 0.85)", variable=entropy_var, value="-L").grid(row=8, column=2, sticky='w')
+    Entry(settings_window, textvariable=binwalk_arg).grid(row=25, column=15, sticky='w')
+
+    ## 설정 저장 버튼 ##
+    set_button = Button(settings_window, text="SET", command=lambda: binwalk_config_save(
+        settings_window,
+        scan_var.get(), extract_var.get(), 
+        entropy_var.get(), binwalk_arg.get()
+    ))
+    set_button.grid(row=25, column=20, sticky='e')
+
+
+def binwalk_config_save(settings_window, scan_option, extract_option, entropy_option, binwalk_arg):
+    ## default 값이 없는 옵션들 예외처리 ##
+    if (scan_option == "-R" and not binwalk_arg) or (scan_option == "-x" and not binwalk_arg) or (scan_option == "-y" and not binwalk_arg) or (extract_option == "-j" and not binwalk_arg) or (extract_option == "-n" and not binwalk_arg) or (extract_option == "-0" and not binwalk_arg):
+        ## 에러 출력 후 설정창이 꺼지지 않게 하기 위한 로직 ##
+        was_topmost = settings_window.winfo_ismapped() #현재 설정 창이 표시되고 있으면
+        settings_window.withdraw()  # withdraw()로 설정 창 숨기기
+
+        messagebox.showerror("Error", "Argument for the option(s) are REQUIRED!")
+
+        settings_window.deiconify() #withdraw()로 숨긴 창 복구
+
+        if was_topmost:
+            settings_window.attributes('-topmost', 1) #topmost 인자를 1로 설정하므로서 최상위 창으로 복구
+        settings_window.focus_force()  # 포커스 강제 지정
+
+        return
+    
+    ## default 값이 있는 옵션들 예외처리 ##
+    elif (extract_option == "-d" and not binwalk_arg) or (extract_option == "-C" and not binwalk_arg) or (entropy_option == "-H" and not binwalk_arg) or (entropy_option == "-L" and not binwalk_arg):
+        if(extract_option == "-d"):
+            binwalk_arg = "8"
+        elif(extract_option == "-C"):
+            binwalk_arg = ""#현재 경로
+        elif(entropy_option == "-H"):
+            binwalk_arg = "0.95"
+        elif(entropy_option == "-L"):
+            binwalk_arg = "0.85"
+        pass
+        
+    settings_window.destroy() # 설정 창 닫기
 
 def memory_stats():
     memory_per = psutil.virtual_memory().percent
@@ -1059,16 +1144,26 @@ def read_font():
 
 
 def main():
-    global file_path
+    global file_path, scan_var, extract_var, entropy_var, binwalk_arg
     file_path = os.path.join(os.path.dirname(__file__), "../icons/")
     checkPlatform()
     read_theme()
     read_font()
     root = createWindow()
-
+    
+    #binwalk default args, 창 생성 후 초기화
+    scan_var = tk.StringVar(value="-B")
+    extract_var = tk.StringVar(value="-e")
+    entropy_var = tk.StringVar(value="-E")
+    binwalk_arg = tk.StringVar()
+    
     create_widgets(root)
+    
+
     refresh([])
     root.mainloop()
+
+    
 
 
 if __name__ == "__main__":
