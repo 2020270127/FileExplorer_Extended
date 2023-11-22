@@ -38,6 +38,8 @@ fileIcon = 0
 items = 0  # holds treeview items
 cwdLabel = 0
 footer = 0
+src_list = []  # 전역 변수: 붙여넣기할 항목 경로를 저장하는 리스트
+selectedItem_list = []  # 전역 변수: 복사할 항목을 저장하는 리스트
 
 # available themes
 # Dark
@@ -987,16 +989,34 @@ def rename_popup():
 
 
 def selectItem(event):
-    global selectedItem, items
-    # selectedItemID = items.focus()
+    global selectedItem, items, selectedItem_list
     iid = items.identify_row(event.y)
-    if iid:
-        items.selection_set(iid)
-        selectedItem = items.item(iid)["values"][0]
-        print(selectedItem)
-        items.focus(iid)  # Give focus to iid
+    
+    if event.state & 0x4:  # Ctrl 키가 눌려 있는지 확인합니다.
+        # Ctrl 키가 눌려 있으면 선택 목록에 추가합니다.
+        if iid:
+            print("1.", selectedItem)
+            items.selection_add(iid)
+            selectedItem = items.item(iid)["values"][0]
+            print("2.", selectedItem)
+            items.focus(iid)  # iid에 포커스를 줍니다.
+            selectedItem_list.append(os.path.join(os.getcwd(), selectedItem))
+            print("list", selectedItem_list)
+        else:
+            pass
     else:
-        pass
+        # Ctrl 키가 눌려 있지 않으면 이전 선택을 지우고 현재 항목을 선택합니다.
+        if iid:
+            items.selection_set(iid)
+            selectedItem = items.item(iid)["values"][0]
+            print(selectedItem)
+            items.focus(iid)  # Give focus to iid
+            selectedItem_list.clear()
+            selectedItem_list.append(os.path.join(os.getcwd(), selectedItem))
+
+        else:
+            pass
+
 
 
 def keybinds():
@@ -1042,8 +1062,19 @@ def wrap_new_dir(event):
 
 def copy():
     global src, items
-    if items.focus() != "":  # if there is a focused item
-        src = os.getcwd() + "/" + selectedItem
+    global selectedItem_list, src_list
+    if selectedItem_list:  # 복사할 항목이 있는지 확인합니다.
+        for selected_item in selectedItem_list:
+            print(f"{selected_item}을(를) 대상지로 복사하는 중...")
+        
+        src_list = selectedItem_list
+        # 복사 후 복사한 항목 리스트를 비웁니다.
+        selected_item = []
+        selectedItem_list = []
+
+    else:
+        print("복사할 항목이 선택되지 않았습니다.")
+
 
 
 def wrap_copy(event):  # wrapper for ctrl+c keybinds
@@ -1056,62 +1087,60 @@ def wrap_paste(event):  # wrapper for ctrl+v keybinds
 
 def paste():
     global src
+    global src_list
     dest = os.getcwd() + "/"
-    if not os.path.isdir(src) and src != "":
-        try:
-            t1 = threading.Thread(
-                target=shutil.copy2, args=(src, dest)
-            )  # use threads so gui does not hang on large file copy
-            t2 = threading.Thread(target=paste_popup, args=([t1]))
-            t1.start()
-            t2.start()
-        except:
-            pass
-    elif os.path.isdir(src) and src != "":
-        try:
-            new_dest_dir = os.path.join(dest, os.path.basename(src))
-            os.makedirs(new_dest_dir)
-            t1 = threading.Thread(  # use threads so gui does not hang on large directory copy
-                target=shutil.copytree,
-                args=(src, new_dest_dir, False, None, shutil.copy2, False, True),
-            )
-            t2 = threading.Thread(target=paste_popup, args=([t1]))
-            t1.start()
-            t2.start()
-        except:
-            pass
+    print(src_list)
+    if src_list:  # 붙여넣을 항목이 있는지 확인합니다.
+        for src in src_list:
+            if not os.path.isdir(src) and src != "":
+                try:
+                    t1 = threading.Thread(
+                        target=shutil.copy2, args=(src, dest)
+                    )  # use threads so gui does not hang on large file copy
+                    t1.start()
+                    refresh([])
+                except:
+                    pass
+            elif os.path.isdir(src) and src != "":
+                try:
+                    new_dest_dir = os.path.join(dest, os.path.basename(src))
+                    os.makedirs(new_dest_dir)
+                    t1 = threading.Thread(  # use threads so gui does not hang on large directory copy
+                        target=shutil.copytree,
+                        args=(src, new_dest_dir, False, None, shutil.copy2, False, True),
+                    )
+                    t1.start()
+                    refresh([])
+                except:
+                    pass
 
-
-def paste_popup(t1):
-    top = ttk.Toplevel(title="Progress")
-    top.geometry("250x50")
-    top.resizable(False, False)
-
-    gauge = ttk.Floodgauge(
-        top, bootstyle="success", mode="indeterminate", text="Copying files.."
-    )
-    gauge.pack(fill=tk.BOTH, expand=tk.YES)
-    gauge.start()
-    t1.join()
+        # 붙여넣기 후 소스 항목 리스트를 비웁니다.
+        src_list = []
+        refresh([])
+    else:
+        print("붙여넣을 항목이 없습니다.")
     refresh([])
-    top.destroy()
 
 
 def del_file_popup():
-    global items
-    if items.focus() != "":  # if there is a focused item
+    global items, selectedItem_list
+    print(selectedItem_list)
+
+    if selectedItem_list:  # if there is a focused item
         answer = Messagebox.yesno(
-            message="Are you sure?\nThis file/directory will be deleted permanently.",
+            message="선택된 파일/폴더를 삭제하시겠습니까?",
             alert=True,
         )
         if answer == "Yes":
-            del_file()
+            for selected_item in selectedItem_list:
+                del_file(selected_item)
+                refresh([])
             refresh([])
         else:
             return
     else:
         Messagebox.show_info(
-            message="There is no selected file or directory.", title="Info"
+            message="삭제할 항목이 선택되지 않았습니다.", title="Info"
         )
 
 
@@ -1119,12 +1148,11 @@ def wrap_del(event):  # wrapper for delete keybind
     del_file_popup()
 
 
-def del_file():
-    if os.path.isfile(os.getcwd() + "/" + selectedItem):
-        os.remove(os.getcwd() + "/" + selectedItem)
-    elif os.path.isdir(os.getcwd() + "/" + selectedItem):
-        # os.rmdir(os.getcwd() + "/" + selectedItem)
-        shutil.rmtree(os.getcwd() + "/" + selectedItem)
+def del_file(selected_item):
+    if os.path.isfile(selected_item):
+        os.remove(selected_item)
+    elif os.path.isdir(selected_item):
+        shutil.rmtree(selected_item)
 
 
 def read_theme():
