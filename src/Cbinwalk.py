@@ -253,6 +253,7 @@ def file_ent(function, file, result, arg=None): #파일 엔트로피 스캔 함�
 def cbinwalk(functions, file, result):
     try:
         if(os.path.isfile(file)):
+            result.append("Filename : " + f'{file}')
             result.append(subprocess.run(['wsl', 'binwalk', f'{functions}', f'{file}'], text=True, capture_output=True).stdout)
         else:
             raise Exception("파일이 아닙니다")      
