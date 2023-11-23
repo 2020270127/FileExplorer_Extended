@@ -248,14 +248,21 @@ def file_ent(function, file, result, arg=None): #파일 엔트로피 스캔 함�
         except Exception as e:
             print(f"binwalk 오류 발생: {e}")
 
+## cmd 경로를 wsl 형식으로 변환 ##
+def convert_windows_path_to_wsl(windows_path): #os.path는 cmd 형태로 넣어야하고, binwalk는 wsl 형태로 넣어야 하기에 해당 파일에 선언.
+    drive = windows_path[0].lower()
+    path = windows_path[3:].replace('\\', '/')
+    return f"/mnt/{drive}/{path}"
 
 ## 굳이 모든 경우를 작성할 필요가 없어서 새로 생성한 함수. 이전 함수는 cli버전 지원을 위해 삭제하지 않는다 ##
 def cbinwalk(functions, file, result):
     try:
         if(os.path.isfile(file)):
             result.append("Filename : " + f'{file}')
-            result.append(subprocess.run(['wsl', 'binwalk', f'{functions}', f'{file}'], text=True, capture_output=True).stdout)
+            result.append(subprocess.run(['wsl', 'binwalk', f'{functions}', f'{convert_windows_path_to_wsl(file)}'], text=True, capture_output=True).stdout)
+            print('wsl' + 'binwalk' + f'{functions}' + f'{file}')
         else:
             raise Exception("파일이 아닙니다")      
     except Exception as e:
         print(f"binwalk 오류 발생: {e}")
+

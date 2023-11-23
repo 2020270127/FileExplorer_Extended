@@ -881,10 +881,10 @@ def binwalk_printResult(func):
 
     return load_window
 
-
 @binwalk_printResult  # 데코레이터를 사용하여 결과 출력, 로딩창 전환을 위한 메인 윈도우 전달
 def binwalk_sigScan():  # 배열로 파일 목록을 받아서 순차적으로 실행
-    for file in files:
+    for file in selectedItem_list:
+        print(file)
         q.put("Scanning " + f'{file}' + " ...")
         Cbinwalk.cbinwalk(f'{(scan_var).get()}' + f'{(scan_arg).get()}', file, binwalk_result)  # tk 객체에서 get 메서드로 값을 가져옴
     q.put("job end")
@@ -892,7 +892,7 @@ def binwalk_sigScan():  # 배열로 파일 목록을 받아서 순차적으로 �
 
 @binwalk_printResult
 def binwalk_extract():
-    for file in files:
+    for file in selectedItem_list:
         q.put("Extracting " + f'{file}' + " ...")
         Cbinwalk.cbinwalk(f'{(extract_var).get()}' + f'{(extract_arg).get()}', file, binwalk_result)
     q.put("job end")
@@ -900,7 +900,7 @@ def binwalk_extract():
 
 @binwalk_printResult
 def binwalk_entropy():
-    for file in files:
+    for file in selectedItem_list:
         q.put("Analyzing " + f'{file}' + " ...")
         Cbinwalk.cbinwalk(f'{(entropy_var).get()}', file, binwalk_result)
     q.put("job end")
