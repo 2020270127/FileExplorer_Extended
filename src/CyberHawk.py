@@ -73,7 +73,12 @@ yetiL = "yeti"
 # 파일 시그니처와 파일 확장자를 쌍으로 미리 저장
 # 텍스트 파일의 형식은 별도의 처리를 위해 따로 저장
 textfile = [".txt", ".py", ".c", ".h", ".cpp"]
-fileSignatureGroup = [(".exe", "4D 5A"), (".msi", "23 20"), (".png", "89 50 4E 47 0D 0A 1A 0A"), (".zip", "50 4B 03 04"), (".jpg", "FF D8 FF E0")]
+fileSignatureGroup = [
+    (".exe", "4D 5A"), (".msi", "23 20"), (".png", "89 50 4E 47 0D 0A 1A 0A"), (".zip", "50 4B 03 04"),
+    (".jpg", "FF D8 FF E0"), (".jpeg", "FF D8 FF E0"), (".mp4", "00 00 00 18 66 74 79 70"),
+    (".docx", "50 4B 03 04 14 00 06 00"), (".pptx", "50 4B 03 04 14 00 06 00"), (".xlsx", "50 4B 03 04 14 00 06 00"),
+    (".hwp", "D0 CF 11 E0 A1 B1 1A E1"), (".msi", "D0 CF 11 E0 A1 B1 1A E1")
+]
 signatureList = [fileSignatureGroup[i][0] for i in range(len(fileSignatureGroup))]
 
 def checkFileSignature(window):
