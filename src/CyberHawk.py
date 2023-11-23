@@ -13,7 +13,9 @@ from ttkbootstrap.dialogs.dialogs import Messagebox
 from ttkbootstrap.dialogs.dialogs import Querybox
 import psutil
 import queue
+import hashlib
 
+# import custom functions
 import ext
 import Cbinwalk
 
@@ -156,6 +158,72 @@ def checkPlatform():
         available_drives = "/"
         currDrive = available_drives
 
+# TODO: implement comparing system, show all hash(sha256)
+def hashExtract(window):
+    global items
+    hash_result = []
+
+    if selectedItem_list:
+        for file in selectedItem_list:
+            # 디렉토리인 경우 (해싱 불가능)
+            if os.path.isdir(file):
+                Messagebox.show_info(
+                    message="Hashing files are only possible."+file+"is a file", title="Info"
+                )
+                break
+            # 파일인 경우
+            elif os.path.isfile(file):
+                print(file)
+                try:
+                    with open(file, mode='rb') as f:
+                        md5_hash = hashlib.md5()
+                        sha256_hash = hashlib.sha256()
+                        sha1_hash = hashlib.sha1()
+
+                        while True:
+                            data = f.read(65536)  # 파일을 64KB 블록으로 읽음
+                            if not data:
+                                break
+
+                            md5_hash.update(data)
+                            sha256_hash.update(data)
+                            sha1_hash.update(data)
+
+                        # 해시 값을 16진수로 반환
+                        hashes = {
+                            'md5': md5_hash.hexdigest(),
+                            'sha256': sha256_hash.hexdigest(),
+                            'sha1': sha1_hash.hexdigest()
+                        }
+                        hash_result.append([file, hashes])
+                    
+                except Exception as e:
+                    print('Error Message:', e)
+
+        
+        # 최종 결과 출력
+        result_window = Toplevel(window)
+        result_window.title = "Hash Extract Result"
+
+        Label(result_window, text="Hash Type", font=("TkDefaultFont", "10", "bold")).grid(row=0, column=0)
+        Label(result_window, text="MD5").grid(row=1, column=0)
+        Label(result_window, text="SHA256").grid(row=2, column=0)
+        Label(result_window, text="SHA1").grid(row=3, column=0)
+
+        # 검사 대상이 된 모든 파일/폴더 이름 출력
+        for col, hr in enumerate(hash_result):
+            i, hashes = hr
+            i = i.split('/')[-1]
+            Label(result_window, text=f"Result of: {i}", font=("TkDefaultFont", "10", "bold")).grid(row=0, column=col+1)
+            Label(result_window, text=hashes['md5']).grid(row=1, column=col+1)
+            Label(result_window, text=hashes['sha256']).grid(row=2, column=col+1)
+            Label(result_window, text=hashes['sha1']).grid(row=3, column=col+1)
+
+    # 파일이나 폴더가 선택되지 않은 경우
+    else:
+        Messagebox.show_info(
+            message="There is no selected file.", title="Error!"
+        )
 
 def createWindow():
     # root = tk.Tk()
@@ -607,10 +675,16 @@ def create_widgets(window):
         command=partial(binwalk_config, window),  # 설정 창은 partial로 window 부모 전달
     )
 
-    # 포맷 스캔 메뉴 생성
+    ## 포맷 스캔 메뉴 생성 ##
     format_menu = ttk.Menu(bar, tearoff=False, font=("TkDefaultFont", font_size))
     format_menu.add_command(
         label="Format Scan", image=cpu_photo, compound="left", command=partial(checkFileSignature, window)
+    )
+
+    ## 해시 값 추출 메뉴 생성 ##
+    hash_extract_menu = ttk.Menu(bar, tearoff=False, font=("TkDefaultFont", font_size))
+    hash_extract_menu.add_command(
+        label="HashExtract", image=info_photo, compound="left", command=partial(hashExtract, window)
     )
 
     sub_themes = ttk.Menu(bar, tearoff=False, font=("TkDefaultFont", font_size))
@@ -671,6 +745,7 @@ def create_widgets(window):
     bar.add_cascade(label="System", menu=system_menu, underline=0)
     bar.add_cascade(label="Binwalk", menu=binwalk_menu, underline=0)  # binwalk 상단바
     bar.add_cascade(label="Format", menu=format_menu, underline=0)  # format scan 상단바
+    bar.add_cascade(label="HashExtract", menu=hash_extract_menu, underline=0)  # format scan 상단바
     bar.add_cascade(label="Preferences", menu=preferences_menu, underline=0)
     bar.add_cascade(label="Help", menu=help_menu, underline=0)
     bar.add_cascade(label="About", menu=about_menu, underline=0)
