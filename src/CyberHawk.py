@@ -16,6 +16,7 @@ import queue
 
 import ext
 import Cbinwalk
+
 # TODO:
 # Linux compatibility,
 # Add move file function,
@@ -41,10 +42,11 @@ cwdLabel = 0
 footer = 0
 src_list = []  # 전역 변수: 붙여넣기할 항목 경로를 저장하는 리스트
 selectedItem_list = []  # 전역 변수: 복사할 항목을 저장하는 리스트
+format_scan_info = [] # 선택한 파일의 포맷/확장자 스캔 결과를 저장하는 리스트
 
-files = ['1','2','3'] # binwalk를 사용할 파일 목록들, 절대경로/상대경로/파일명 모두 가능.
-binwalk_result = [] # binwalk 결과를 저장할 리스트
-q = queue.Queue() # binwalk 로딩창을 위해 생성한 큐
+files = ['1', '2', '3']  # binwalk를 사용할 파일 목록들, 절대경로/상대경로/파일명 모두 가능.
+binwalk_result = []  # binwalk 결과를 저장할 리스트
+q = queue.Queue()  # binwalk 로딩창을 위해 생성한 큐
 
 # available themes
 # Dark
@@ -59,13 +61,84 @@ mintyL = "minty"
 morphL = "morph"
 yetiL = "yeti"
 
-#binwalk options
-#scan_var = None
-#extract_var = None
-#entropy_var = None
-#binwalk_arg = None
-#extract_b_arg = None
-#entropy_b_arg = None
+
+# binwalk options
+# scan_var = None
+# extract_var = None
+# entropy_var = None
+# binwalk_arg = None
+# extract_b_arg = None
+# entropy_b_arg = None
+
+# 파일 시그니처와 파일 확장자를 쌍으로 미리 저장
+# 텍스트 파일의 형식은 별도의 처리를 위해 따로 저장
+textfile = [".txt", ".py", ".c", ".h", ".cpp"]
+fileSignatureGroup = [(".exe", "4D 5A"), (".msi", "23 20"), (".png", "89 50 4E 47 0D 0A 1A 0A"), (".zip", "50 4B 03 04"), (".jpg", "FF D8 FF E0")]
+signatureList = [fileSignatureGroup[i][0] for i in range(len(fileSignatureGroup))]
+
+def checkFileSignature(window):
+    global items
+    # 프로그램이 실행된 이후 포맷 탐색이 여러번 진행될 수 있음
+    # 이전 스캔 결과와 중첩되는 것을 막기위해 리스트 정리
+    format_scan_info.clear()
+
+    # 파일 또는 폴더가 선택된 경우
+    if selectedItem_list:
+        # 다중 선택이 될 수 있어 리스트에 있는 모든 선택된 파일/폴더에 대해 검사를 진행
+        for file in selectedItem_list:
+            # 폴더가 선택된 경우 단순 폴더임을 알림
+            if os.path.isdir(file):
+                format_scan_info.append("Directory")
+            # 파일인 경우 몇 가지 존재할 수 있는 경우의 수를 모두 다룸
+            # 1. 텍스트 형식의 파일인 경우(메모장, 코드/헤더 등)
+            # 2. 파일에 확장자가 없는 경우
+            # 3. 그 외에 파일 확장자가 존재하는 경우
+            # 4. 검사하고자 하는 파일의 확장자가 미리 저장되어 있지 않은 경우
+            elif os.path.isfile(file):
+                fileExt = os.path.splitext(file)[1] # 파일 확장자명만 변수로 저장
+                if fileExt in textfile: # 텍스트 형식의 파일은 텍스트 파일임을 알려줌
+                    format_scan_info.append("Text file")
+                elif fileExt == '': # 파일 확장자가 없으면 알 수 없음
+                    format_scan_info.append("Unknown Type")
+                elif fileExt in signatureList: # 파일 확장자가 있으면 파일 시그니처와 일치하는지 검사
+                    with open(file, mode='rb') as f:
+                        # 바이너리 형태로 읽어 16진수의 파일 시그니처를 가져옴
+                        binaryData = f.read(20)
+                        binaryDataString = ["{:02x}".format(x) for x in binaryData]
+
+                        # 파일 시그니처가 파일 확장자가 올바르게 매칭되는지 확인
+                        index = signatureList.index(fileExt)
+                        datastream = binaryDataString[0:len(fileSignatureGroup[index][1].split(' '))]
+                        fileSignature = fileSignatureGroup[index][1].lower().split(' ')
+
+                        # 시그니처와 확장자가 올바르게 매칭되는지 최종 확인
+                        if datastream == fileSignature:
+                            format_scan_info.append("Proper")
+                        else:
+                            format_scan_info.append("Improper File Extension")
+                # 예외처리 : 검사 대상이 되는 파일의 확장자가 미리 저장되어 있지 않으면 에러 출력
+                else:
+                    format_scan_info.append("Error")
+        # 최종 결과 출력
+        print(format_scan_info)
+        result_window = Toplevel(window)
+        result_window.title = "Format Scanning Result"
+
+        # 검사 대상이 된 모든 파일/폴더 이름 출력
+        Label(result_window, text="Name", font=("TkDefaultFont", "10", "bold")).grid(row=0, column=0)
+        for i in range(len(selectedItem_list)):
+            Label(result_window, text=selectedItem_list[i].split('\\')[-1]).grid(row=(i + 1), column=0)
+
+        # 검사 대상이 된 모든 파일/폴더의 검사 결과 출력
+        Label(result_window, text="Scan Info", font=("TkDefaultFont", "10", "bold")).grid(row=0, column=1)
+        for j in range(len(format_scan_info)):
+            Label(result_window, text=format_scan_info[j]).grid(row=(j + 1), column=1)
+
+    # 파일이나 폴더가 선택되지 않은 경우
+    else:
+        Messagebox.show_info(
+            message="There is no selected file or directory.", title="Info"
+        )
 
 def checkPlatform():
     global currDrive, available_drives
@@ -154,10 +227,10 @@ def refresh(queryNames):
     # Refresh Footer
     footer.config(
         text=" "
-        + str(len(fileNames))
-        + " items | "
-        + str(round(fileSizesSum / 1024, 1))
-        + " MB Total"
+             + str(len(fileNames))
+             + " items | "
+             + str(round(fileSizesSum / 1024, 1))
+             + " MB Total"
     )
     footer.pack(fill=tk.BOTH)
     # --Refresh Footer
@@ -195,7 +268,7 @@ def onDoubleClick(event=None):
     try:
         newPath = os.getcwd() + "/" + tempName
         if os.path.isdir(
-            newPath
+                newPath
         ):  # if file is directory, open directory else open file
             os.chdir(newPath)
         else:
@@ -511,7 +584,7 @@ def create_widgets(window):
         compound="left",
         command=partial(processes_win, window),
     )
-## binwalk 메뉴 생성 ##
+    ## binwalk 메뉴 생성 ##
     binwalk_menu = ttk.Menu(bar, tearoff=False, font=("TkDefaultFont", font_size))
     binwalk_menu.add_command(
         label="Signature Scanner", image=cpu_photo, compound="left", command=binwalk_sigScan
@@ -526,7 +599,13 @@ def create_widgets(window):
         label="Configuration",
         image=process_photo,
         compound="left",
-        command=partial(binwalk_config, window), #설정 창은 partial로 window 부모 전달
+        command=partial(binwalk_config, window),  # 설정 창은 partial로 window 부모 전달
+    )
+
+    # 포맷 스캔 메뉴 생성
+    format_menu = ttk.Menu(bar, tearoff=False, font=("TkDefaultFont", font_size))
+    format_menu.add_command(
+        label="Format Scan", image=cpu_photo, compound="left", command=partial(checkFileSignature, window)
     )
 
     sub_themes = ttk.Menu(bar, tearoff=False, font=("TkDefaultFont", font_size))
@@ -585,7 +664,8 @@ def create_widgets(window):
     bar.add_cascade(label="File", menu=file_menu, underline=0)
     bar.add_cascade(label="Drives", menu=drives_menu, underline=0)
     bar.add_cascade(label="System", menu=system_menu, underline=0)
-    bar.add_cascade(label="Binwalk", menu=binwalk_menu, underline=0) #binwalk 상단바
+    bar.add_cascade(label="Binwalk", menu=binwalk_menu, underline=0)  # binwalk 상단바
+    bar.add_cascade(label="Format", menu=format_menu, underline=0)  # format scan 상단바
     bar.add_cascade(label="Preferences", menu=preferences_menu, underline=0)
     bar.add_cascade(label="Help", menu=help_menu, underline=0)
     bar.add_cascade(label="About", menu=about_menu, underline=0)
@@ -714,7 +794,7 @@ def drive_stats(window):
                 metertype="semi",
                 subtext="GB Used",
                 textright="/ "
-                + str(
+                          + str(
                     round(psutil.disk_usage(drive).total / (1024 * 1024 * 1024))
                 ),  # converts bytes to GB
                 textleft=drive,
@@ -739,15 +819,15 @@ def cpu_stats():
     cpu_freq = round(psutil.cpu_freq().current / 1000, 2)
     Messagebox.ok(
         message="Usage: "
-        + str(cpu_per)
-        + "%"
-        + "\nLogical Processors: "
-        + str(cpu_count)
-        + "\nCores: "
-        + str(cpu_count_log)
-        + "\nFrequency: "
-        + str(cpu_freq)
-        + " GHz",
+                + str(cpu_per)
+                + "%"
+                + "\nLogical Processors: "
+                + str(cpu_count)
+                + "\nCores: "
+                + str(cpu_count_log)
+                + "\nFrequency: "
+                + str(cpu_freq)
+                + " GHz",
         title="CPU",
     )
 
@@ -755,30 +835,30 @@ def cpu_stats():
 ## 결과값을 출력하는 함수 ##
 def binwalk_printResult(func):
     def load_window():
-        global binwalk_result # 전역 변수 binwalk_result
-        binwalk_result.clear() # 이전에 불러온 결과 비우기
+        global binwalk_result  # 전역 변수 binwalk_result
+        binwalk_result.clear()  # 이전에 불러온 결과 비우기
         ## 로딩 창 생성 ##
-        loading_window = Toplevel() 
+        loading_window = Toplevel()
         loading_window.title("Working Status")
         loading_window.attributes('-topmost', True)
         load_area = scrolledtext.ScrolledText(loading_window, wrap=tk.WORD, width=80, height=20)
         load_area.pack(padx=10, pady=10)
-        
+
         ## 결과 창 생성 ##
         result_window = Toplevel()
         result_window.title("Result")
-        result_window.withdraw()  
+        result_window.withdraw()
         result_area = scrolledtext.ScrolledText(result_window, wrap=tk.WORD, width=80, height=20)
         result_area.pack(padx=10, pady=10)
 
         ## 로드 창 파괴 직전에 결과창 로드 ##
         def on_loading_close():
-            result_window.deiconify()  
+            result_window.deiconify()
             for result in binwalk_result:
                 result_area.insert(tk.END, result + '\n')
             result_area.configure(state='disabled')
 
-        threading.Thread(target=lambda: func()).start() # 결과값 로드를 위해 스레드로 독립 실행
+        threading.Thread(target=lambda: func()).start()  # 결과값 로드를 위해 스레드로 독립 실행
 
         ## 로딩 창 로직, 큐로 상태를 전달받음 ##
         def update_progress():
@@ -786,7 +866,7 @@ def binwalk_printResult(func):
                 message = q.get()
                 load_area.insert(tk.END, message + '\n')
                 load_area.yview(tk.END)
-                if message == "job end": # 큐에 job end가 있을 경우 
+                if message == "job end":  # 큐에 job end가 있을 경우
                     on_loading_close()  # 창 파괴 전에 실행하도록 설정
                     loading_window.destroy()  # loading_window 파괴
                     return
@@ -794,27 +874,29 @@ def binwalk_printResult(func):
 
         update_progress()
 
-    return load_window 
-        
+    return load_window
 
-@binwalk_printResult #데코레이터를 사용하여 결과 출력, 로딩창 전환을 위한 메인 윈도우 전달
-def binwalk_sigScan(): #배열로 파일 목록을 받아서 순차적으로 실행
+
+@binwalk_printResult  # 데코레이터를 사용하여 결과 출력, 로딩창 전환을 위한 메인 윈도우 전달
+def binwalk_sigScan():  # 배열로 파일 목록을 받아서 순차적으로 실행
     for file in files:
-        q.put("Scanning "+f'{file}' + " ...")
-        Cbinwalk.cbinwalk(f'{(scan_var).get()}' + f'{(scan_arg).get()}', file, binwalk_result)  #tk 객체에서 get 메서드로 값을 가져옴
+        q.put("Scanning " + f'{file}' + " ...")
+        Cbinwalk.cbinwalk(f'{(scan_var).get()}' + f'{(scan_arg).get()}', file, binwalk_result)  # tk 객체에서 get 메서드로 값을 가져옴
     q.put("job end")
+
 
 @binwalk_printResult
 def binwalk_extract():
     for file in files:
-        q.put("Extracting "+f'{file}' + " ...")
+        q.put("Extracting " + f'{file}' + " ...")
         Cbinwalk.cbinwalk(f'{(extract_var).get()}' + f'{(extract_arg).get()}', file, binwalk_result)
     q.put("job end")
+
 
 @binwalk_printResult
 def binwalk_entropy():
     for file in files:
-        q.put("Analyzing "+f'{file}' + " ...")
+        q.put("Analyzing " + f'{file}' + " ...")
         Cbinwalk.cbinwalk(f'{(entropy_var).get()}', file, binwalk_result)
     q.put("job end")
 
@@ -835,7 +917,7 @@ def binwalk_config(window):
     Radiobutton(settings_window, text="Only show results that match <ARGUMENT REQUIRED>", variable=scan_var, value="-y").grid(row=8, column=0, sticky='w')
     Label(settings_window, text="Argument:").grid(row=13, column=0, sticky='w')
     Entry(settings_window, textvariable=scan_arg).grid(row=13, column=1, sticky='w')
-    
+
     Label(settings_window, text="Extract Options:").grid(row=1, column=1, sticky='w')
     Radiobutton(settings_window, text="Automatically extract known file types", variable=extract_var, value="-e").grid(row=2, column=1, sticky='w')
     Radiobutton(settings_window, text="Recursively scan extracted files", variable=extract_var, value="-M").grid(row=3, column=1, sticky='w')
@@ -852,7 +934,7 @@ def binwalk_config(window):
     Entry(settings_window, textvariable=extract_arg).grid(row=13, column=3, sticky='w')
 
     ## 설정 저장 버튼 ##
-    set_button = Button(settings_window, text="SET", command=lambda: binwalk_config_save(settings_window, scan_var.get(), extract_var.get(),  scan_arg.get(),  extract_arg.get())) #Button은 함수 이름만 받기 때문에, lambda를 사용하여 인자를 준 함수를 호출
+    set_button = Button(settings_window, text="SET", command=lambda: binwalk_config_save(settings_window, scan_var.get(), extract_var.get(), scan_arg.get(), extract_arg.get()))  # Button은 함수 이름만 받기 때문에, lambda를 사용하여 인자를 준 함수를 호출
     set_button.grid(row=13, column=5, sticky='e')
 
 
@@ -860,28 +942,29 @@ def binwalk_config_save(settings_window, scan_option, extract_option, scan_arg, 
     ## default 값이 없는 옵션들 예외처리 ##
     if (scan_option == "-R" and not scan_arg) or (scan_option == "-x" and not scan_arg) or (scan_option == "-y" and not scan_arg) or (extract_option == "-j" and not extract_arg) or (extract_option == "-n" and not extract_arg) or (extract_option == "-0" and not extract_arg):
         ## 에러 출력 후 설정창이 꺼지지 않게 하기 위한 로직 ##
-        was_topmost = settings_window.winfo_ismapped() #현재 설정 창이 표시되고 있으면
+        was_topmost = settings_window.winfo_ismapped()  # 현재 설정 창이 표시되고 있으면
         settings_window.withdraw()  # withdraw()로 설정 창 숨기기
 
         messagebox.showerror("Error", "Argument for the option(s) are REQUIRED!")
 
-        settings_window.deiconify() #withdraw()로 숨긴 창 복구
+        settings_window.deiconify()  # withdraw()로 숨긴 창 복구
 
         if was_topmost:
-            settings_window.attributes('-topmost', 1) #topmost 인자를 1로 설정하므로서 최상위 창으로 복구
+            settings_window.attributes('-topmost', 1)  # topmost 인자를 1로 설정하므로서 최상위 창으로 복구
         settings_window.focus_force()  # 포커스 강제 지정
 
         return
-    
+
     ## default 값이 있는 옵션들 예외처리 ##
     elif (extract_option == "-d" and not extract_arg) or (extract_option == "-C" and not extract_arg):
-        if(extract_option == "-d"):
+        if (extract_option == "-d"):
             extract_arg = "8"
-        elif(extract_option == "-C"):
-            extract_arg = os.getcwd() #현재 경로
+        elif (extract_option == "-C"):
+            extract_arg = os.getcwd()  # 현재 경로
         pass
-        
-    settings_window.destroy() # 설정 창 닫기
+
+    settings_window.destroy()  # 설정 창 닫기
+
 
 def memory_stats():
     memory_per = psutil.virtual_memory().percent
@@ -890,17 +973,17 @@ def memory_stats():
     memory_avail = round(psutil.virtual_memory().available / (1024 * 1024 * 1024), 2)
     Messagebox.ok(
         message="Usage: "
-        + str(memory_per)
-        + "%"
-        + "\nTotal: "
-        + str(memory_total)
-        + " GB"
-        + "\nUsed: "
-        + str(memory_used)
-        + " GB"
-        + "\nAvailable: "
-        + str(memory_avail)
-        + " GB",
+                + str(memory_per)
+                + "%"
+                + "\nTotal: "
+                + str(memory_total)
+                + " GB"
+                + "\nUsed: "
+                + str(memory_used)
+                + " GB"
+                + "\nAvailable: "
+                + str(memory_avail)
+                + " GB",
         title="Memory",
     )
 
@@ -910,14 +993,14 @@ def network_stats():
     mes = ""
     for key, value in net.items():
         mes += (
-            str(key)
-            + ":\n"
-            + "Sent: "
-            + str(round(value.bytes_sent / (1024 * 1024 * 1024), 2))
-            + " GB\n"
-            + "Received: "
-            + str(round(value.bytes_recv / (1024 * 1024 * 1024), 2))
-            + " GB\n\n"
+                str(key)
+                + ":\n"
+                + "Sent: "
+                + str(round(value.bytes_sent / (1024 * 1024 * 1024), 2))
+                + " GB\n"
+                + "Received: "
+                + str(round(value.bytes_recv / (1024 * 1024 * 1024), 2))
+                + " GB\n\n"
         )
     Messagebox.ok(message=mes, title="Network")
 
@@ -1017,7 +1100,7 @@ def rename_popup():
 def selectItem(event):
     global selectedItem, items, selectedItem_list
     iid = items.identify_row(event.y)
-    
+
     if event.state & 0x4:  # Ctrl 키가 눌려 있는지 확인합니다.
         # Ctrl 키가 눌려 있으면 선택 목록에 추가합니다.
         if iid:
@@ -1044,12 +1127,11 @@ def selectItem(event):
             pass
 
 
-
 def keybinds():
     Messagebox.ok(
         message="Copy - <Control + C>\nPaste - <Control + V>\nDelete - <Del>\n"
-        + "New Directory - <Control + Shift + N>\nRefresh - <F5>\n"
-        + "Select up - <Arrow key up>\nSelect down - <Arrow key down>",
+                + "New Directory - <Control + Shift + N>\nRefresh - <F5>\n"
+                + "Select up - <Arrow key up>\nSelect down - <Arrow key down>",
         title="Info",
     )
 
@@ -1092,7 +1174,7 @@ def copy():
     if selectedItem_list:  # 복사할 항목이 있는지 확인합니다.
         for selected_item in selectedItem_list:
             print(f"{selected_item}을(를) 대상지로 복사하는 중...")
-        
+
         src_list = selectedItem_list
         # 복사 후 복사한 항목 리스트를 비웁니다.
         selected_item = []
@@ -1100,7 +1182,6 @@ def copy():
 
     else:
         print("복사할 항목이 선택되지 않았습니다.")
-
 
 
 def wrap_copy(event):  # wrapper for ctrl+c keybinds
@@ -1204,21 +1285,18 @@ def main():
     read_theme()
     read_font()
     root = createWindow()
-    
-    #binwalk default args, 창 생성 후 초기화
+
+    # binwalk default args, 창 생성 후 초기화
     scan_var = tk.StringVar(value="-B")
     extract_var = tk.StringVar(value="-e")
     entropy_var = tk.StringVar(value="-E")
     scan_arg = tk.StringVar()
     extract_arg = tk.StringVar()
-    
+
     create_widgets(root)
-    
 
     refresh([])
     root.mainloop()
-
-    
 
 
 if __name__ == "__main__":
