@@ -1114,6 +1114,7 @@ def selectItem(event):
             selectedItem = items.item(iid)["values"][0]
             print("2.", selectedItem)
             items.focus(iid)  # iid에 포커스를 줍니다.
+            selectedItem = str(selectedItem)
             selectedItem_list.append(os.path.join(os.getcwd(), selectedItem))
             print("list", selectedItem_list)
         else:
@@ -1126,6 +1127,7 @@ def selectItem(event):
             print(selectedItem)
             items.focus(iid)  # Give focus to iid
             selectedItem_list.clear()
+            selectedItem = str(selectedItem)
             selectedItem_list.append(os.path.join(os.getcwd(), selectedItem))
 
         else:
