@@ -765,7 +765,7 @@ def create_widgets(window):
     bar.add_cascade(label="Preferences", menu=preferences_menu, underline=0)
     bar.add_cascade(label="Help", menu=help_menu, underline=0)
     bar.add_cascade(label="About", menu=about_menu, underline=0)
-    bar.add_cascade(label="virusScan", menu=virusScan_menu,underline=0) #virusScan
+    bar.add_cascade(label="VirusScan", menu=virusScan_menu,underline=0) #virusScan
 
     # --Menu bar
 
@@ -1379,12 +1379,11 @@ def read_font():
 
 #virusScan
 def apiKeySetting():
-    root = tk.Tk()
-    root.withdraw()  # 숨김 처리
     apiKeyResult = simpledialog.askstring("Input", "Please enter your VirusTotal API key:")
-    f=open(script_folder+"/"+'apiKey.txt','w')
-    f.write(apiKeyResult)
-    f.close()
+    if apiKeyResult!=None:
+        f=open(script_folder+"/"+'apiKey.txt',mode='w')
+        f.write(apiKeyResult)
+        f.close()
 
 def get_api_key():
     apiKeyFile='apiKey.txt'
@@ -1394,64 +1393,66 @@ def get_api_key():
         f.close()
         return apiKeyResult
     else:
-        root = tk.Tk()
-        root.withdraw()  # 숨김 처리
         apiKeyResult = simpledialog.askstring("Input", "Please enter your VirusTotal API key:")
-        f=open(script_folder+"/"+'apiKey.txt','w')
-        f.write(apiKeyResult)
-        f.close()
-        return apiKeyResult
-
+        if apiKeyResult!=None:
+            f=open(script_folder+"/"+'apiKey.txt',mode='w')
+            f.write(apiKeyResult)
+            f.close()
+            return apiKeyResult
+        else:
+            return apiKeyResult
 def virus_scan():
     global selectedItem_list
     if len(selectedItem_list)==1:
         upload_url = 'https://www.virustotal.com/vtapi/v2/file/scan'
         api_key = get_api_key()
-            
-        file_path = os.path.join(os.getcwd(), selectedItem_list[0])
-        report_url = 'https://www.virustotal.com/vtapi/v2/file/report'
-        upload_files = {'file': (file_path, open(file_path, 'rb'))}
-        upload_params = {'apikey': api_key}
+        if api_key !=None:    
+            file_path = os.path.join(os.getcwd(), selectedItem_list[0])
+            report_url = 'https://www.virustotal.com/vtapi/v2/file/report'
+            upload_files = {'file': (file_path, open(file_path, 'rb'))}
+            upload_params = {'apikey': api_key}
 
-        try:
-            upload_response = requests.post(upload_url, files=upload_files, params=upload_params)
+            try:
+                upload_response = requests.post(upload_url, files=upload_files, params=upload_params)
 
-            if upload_response.status_code == 200:
-                upload_result = upload_response.json()
-                scan_id = upload_result.get('scan_id')
+                if upload_response.status_code == 200:
+                    upload_result = upload_response.json()
+                    scan_id = upload_result.get('scan_id')
 
-                if scan_id:
-                    messagebox.showinfo("Success", f"File uploaded successfully.")
-                    time.sleep(10)
+                    if scan_id:
+                        messagebox.showinfo("Success", f"File uploaded successfully.")
+                        time.sleep(10)
 
-                    report_params = {'apikey': api_key, 'resource': scan_id}
-                    report_response = requests.get(report_url, params=report_params)
+                        report_params = {'apikey': api_key, 'resource': scan_id}
+                        report_response = requests.get(report_url, params=report_params)
 
-                    if report_response.status_code == 200:
-                        report_result = report_response.json()
+                        if report_response.status_code == 200:
+                            report_result = report_response.json()
 
-                        if 'scans' in report_result:
-                            count = 0
-                            for antivirus, scan_result in report_result['scans'].items():
-                                if scan_result['detected']:
-                                    tk.messagebox.showinfo("Scan Result", f"{antivirus}: Detected, Result: {scan_result['result']}")
-                                    count += 1
+                            if 'scans' in report_result:
+                                count = 0
+                                for antivirus, scan_result in report_result['scans'].items():
+                                    if scan_result['detected']:
+                                        tk.messagebox.showinfo("Scan Result", f"{antivirus}: Detected, Result: {scan_result['result']}")
+                                        count += 1
 
-                            if count == 0:
-                                tk.messagebox.showinfo("Scan Result", "Not detected")
+                                if count == 0:
+                                    tk.messagebox.showinfo("Scan Result", "Not detected")
+                            else:
+                                tk.messagebox.showinfo("Scan Result", "No scan results found.")
                         else:
-                            tk.messagebox.showinfo("Scan Result", "No scan results found.")
+                            tk.messagebox.showerror("Error", f"Error getting scan results: {report_response.status_code} - {report_response.text}")
                     else:
-                        tk.messagebox.showerror("Error", f"Error getting scan results: {report_response.status_code} - {report_response.text}")
+                        tk.messagebox.showinfo("Error", "No scan ID found in the upload response.")
                 else:
-                    tk.messagebox.showinfo("Error", "No scan ID found in the upload response.")
-            else:
-                tk.messagebox.showerror("Error", f"Error uploading file: {upload_response.status_code} - {upload_response.text}")
+                    tk.messagebox.showerror("Error", f"Error uploading file: {upload_response.status_code} - {upload_response.text}")
 
-        except Exception as e:
-            tk.messagebox.showerror("Error", f"An error occurred: {str(e)}")
+            except Exception as e:
+                tk.messagebox.showerror("Error", f"An error occurred: {str(e)}")
+        else:
+            tk.messagebox.showerror("Error","ApiKey를 입력 해주세요")
     else:
-        tk.messagebox.showerror("virusScan은 한개의 파일만 선택가능합니다")
+        tk.messagebox.showerror("Error","virusScan은 한개의 파일만 선택가능합니다")
 
 
 def main():
