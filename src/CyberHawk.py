@@ -501,13 +501,13 @@ def create_widgets(window):
         command=onDoubleClick,
     )
     m.add_separator()
-    m.add_command(
-        label="New file", image=file_photo, compound="left", command=new_file_popup
-    )
-    m.add_command(
-        label="New directory", image=dir_photo, compound="left", command=new_dir_popup
-    )
-    m.add_separator()
+    # m.add_command(
+    #     label="New file", image=file_photo, compound="left", command=new_file_popup
+    # )
+    # m.add_command(
+    #     label="New directory", image=dir_photo, compound="left", command=new_dir_popup
+    # )
+    # m.add_separator()
     m.add_command(
         label="Copy Selected",
         image=copy_photo,
