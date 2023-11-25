@@ -87,7 +87,6 @@ fileSignatureGroup = [
 signatureList = [fileSignatureGroup[i][0] for i in range(len(fileSignatureGroup))]
 
 def checkFileSignature(window):
-    global items
     # 프로그램이 실행된 이후 포맷 탐색이 여러번 진행될 수 있음
     # 이전 스캔 결과와 중첩되는 것을 막기위해 리스트 정리
     format_scan_info.clear()
@@ -130,7 +129,6 @@ def checkFileSignature(window):
                 else:
                     format_scan_info.append("Error")
         # 최종 결과 출력
-        print(format_scan_info)
         result_window = Toplevel(window)
         result_window.title = "Format Scanning Result"
 
