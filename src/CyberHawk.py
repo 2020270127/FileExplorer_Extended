@@ -165,6 +165,12 @@ def hashExtract(window):
     hash_result = []
 
     if selectedItem_list:
+        if len(selectedItem_list) > 2:
+            Messagebox.show_info(
+                message="Only 1 or 2 items are permitted. Sorry!", title="Error!"
+            )
+            return
+
         for file in selectedItem_list:
             # 디렉토리인 경우 (해싱 불가능)
             if os.path.isdir(file):
@@ -174,7 +180,6 @@ def hashExtract(window):
                 break
             # 파일인 경우
             elif os.path.isfile(file):
-                print(file)
                 try:
                     with open(file, mode='rb') as f:
                         md5_hash = hashlib.md5()
@@ -215,10 +220,10 @@ def hashExtract(window):
         for col, hr in enumerate(hash_result):
             i, hashes = hr
             i = i.split('/')[-1]
-            Label(result_window, text=f"Result of: {i}", font=("TkDefaultFont", "10", "bold")).grid(row=0, column=col+1)
-            Label(result_window, text=hashes['md5']).grid(row=1, column=col+1)
-            Label(result_window, text=hashes['sha256']).grid(row=2, column=col+1)
-            Label(result_window, text=hashes['sha1']).grid(row=3, column=col+1)
+            Label(result_window, wraplength=400, text=f"Result of: {i}", font=("TkDefaultFont", "10", "bold")).grid(row=0, column=col+1)
+            Label(result_window, wraplength=400, text=hashes['md5']).grid(row=1, column=col+1)
+            Label(result_window, wraplength=400, text=hashes['sha256']).grid(row=2, column=col+1)
+            Label(result_window, wraplength=400, text=hashes['sha1']).grid(row=3, column=col+1)
 
     # 파일이나 폴더가 선택되지 않은 경우
     else:
