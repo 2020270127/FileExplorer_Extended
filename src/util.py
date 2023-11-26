@@ -285,7 +285,6 @@ def cbinwalk(functions, file, result):
         if(os.path.isfile(file)):
             result.append("Filename : " + f'{file}')
             result.append(subprocess.run(['wsl', 'binwalk', f'{functions}', f'{convert_windows_path_to_wsl(file)}'], text=True, capture_output=True).stdout)
-            print('wsl' + 'binwalk' + f'{functions}' + f'{file}')
         else:
             raise Exception("파일이 아닙니다")      
     except Exception as e:
