@@ -9,7 +9,6 @@ import shutil
 import hashlib
 import requests
 import Sort # sort 함수 동작을 위한 자체 제작 라이브러리
-import Cbinwalk as cbin# binwalk 함수 동작을 위한 메크로
 import time
 # 파일 시그니처와 파일 확장자를 쌍으로 미리 저장
 # 텍스트 파일의 형식은 별도의 처리를 위해 따로 저장
