@@ -360,7 +360,10 @@ def onDoubleClick(event=None):
 
 def onRightClick(m, event):
     selectItem(event)
-    m.tk_popup(event.x_root, event.y_root)
+    if not items.identify_row(event.y):
+        m.tk_popup(event.x_root, event.y_root)
+    else:
+        m.tk_popup(event.x_root, event.y_root)
 
 
 def search(searchEntry, event):
@@ -496,6 +499,13 @@ def create_widgets(window):
     delete_photo = ImageTk.PhotoImage(delete_img)
 
     # Right click menu
+    # b = ttk.Menu(window, tearoff=False, font=("TkDefaultFont", font_size))
+    # b.add_command(
+    #     label="New file", image=file_photo, compound="left", command=new_file_popup
+    # )
+    # b.add_command(
+    #     label="New directory", image=dir_photo, compound="left", command=new_dir_popup
+    # )
     m = ttk.Menu(window, tearoff=False, font=("TkDefaultFont", font_size))
     m.add_command(
         label="Open",
@@ -504,13 +514,7 @@ def create_widgets(window):
         command=onDoubleClick,
     )
     m.add_separator()
-    # m.add_command(
-    #     label="New file", image=file_photo, compound="left", command=new_file_popup
-    # )
-    # m.add_command(
-    #     label="New directory", image=dir_photo, compound="left", command=new_dir_popup
-    # )
-    # m.add_separator()
+
     m.add_command(
         label="Copy Selected",
         image=copy_photo,
@@ -1202,6 +1206,13 @@ def rename_popup():
 def selectItem(event):
     global selectedItem, items, selectedItem_list
     iid = items.identify_row(event.y)
+
+    if not iid:
+        items.selection_remove(items.selection())
+        items.focus('')
+        selectedItem_list.clear()
+        selectedItem = None
+        return
     if event.state & 0x4:  # Ctrl 키가 눌려 있는지 확인합니다.
         # Ctrl 키가 눌려 있으면 선택 목록에 추가합니다.
         if iid:
@@ -1210,13 +1221,15 @@ def selectItem(event):
             items.focus(iid)  # iid에 포커스를 줍니다.
             selectedItem = str(selectedItem)
 
+            #중복시 제거
             if os.path.join(os.getcwd(), selectedItem) in selectedItem_list:
                 selectedItem_list.remove(os.path.join(os.getcwd(), selectedItem))
                 items.selection_remove(iid)
             else:
                 selectedItem_list.append(os.path.join(os.getcwd(), selectedItem))
-
         else:
+            items.selection_clear()
+            selectedItem_list.clear()
             pass
     elif event.state & 0x1:  # Shift 키가 눌려 있는지 확인합니다.
         # Shift 키가 눌려 있으면 정렬된 순서대로 항목 범위를 선택합니다.
