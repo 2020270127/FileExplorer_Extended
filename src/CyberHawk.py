@@ -1159,6 +1159,7 @@ def up_key(event):
         pass
 
 
+
 def down_key(event):
     global selectedItem, items
     iid = items.focus()
@@ -1201,34 +1202,50 @@ def rename_popup():
 def selectItem(event):
     global selectedItem, items, selectedItem_list
     iid = items.identify_row(event.y)
-
     if event.state & 0x4:  # Ctrl 키가 눌려 있는지 확인합니다.
         # Ctrl 키가 눌려 있으면 선택 목록에 추가합니다.
         if iid:
-            print("1.", selectedItem)
             items.selection_add(iid)
             selectedItem = items.item(iid)["values"][0]
-            print("2.", selectedItem)
             items.focus(iid)  # iid에 포커스를 줍니다.
             selectedItem = str(selectedItem)
-            selectedItem_list.append(os.path.join(os.getcwd(), selectedItem))
-            print("list", selectedItem_list)
+
+            if os.path.join(os.getcwd(), selectedItem) in selectedItem_list:
+                selectedItem_list.remove(os.path.join(os.getcwd(), selectedItem))
+                items.selection_remove(iid)
+            else:
+                selectedItem_list.append(os.path.join(os.getcwd(), selectedItem))
+
         else:
             pass
+    elif event.state & 0x1:  # Shift 키가 눌려 있는지 확인합니다.
+        # Shift 키가 눌려 있으면 정렬된 순서대로 항목 범위를 선택합니다.
+        current_selection = items.selection()
+        if current_selection:
+            # 첫 번째와 마지막으로 선택된 항목을 가져옵니다.
+            first_selected = current_selection[0]
+            last_selected = current_selection[-1]
+
+            # 첫 번째와 마지막으로 선택된 항목의 인덱스를 가져옵니다.
+            first_index = items.index(first_selected)
+            last_index = items.index(last_selected)
+            # 첫 번째와 마지막으로 선택된 항목 사이의 항목 범위를 선택합니다.
+            selected_range = items.get_children()[first_index:last_index + 1]
+            items.selection_add(selected_range)
+            for item in selected_range:
+                selectedItem = items.item(item)["values"][0]
+                selectedItem_list.append(os.path.join(os.getcwd(), selectedItem))
     else:
         # Ctrl 키가 눌려 있지 않으면 이전 선택을 지우고 현재 항목을 선택합니다.
         if iid:
             items.selection_set(iid)
             selectedItem = items.item(iid)["values"][0]
-            print(selectedItem)
             items.focus(iid)  # Give focus to iid
             selectedItem_list.clear()
             selectedItem = str(selectedItem)
             selectedItem_list.append(os.path.join(os.getcwd(), selectedItem))
-
         else:
             pass
-
 
 def keybinds():
     Messagebox.ok(
