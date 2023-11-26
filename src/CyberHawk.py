@@ -989,7 +989,7 @@ def binwalk_printResult(func):
 
     return load_window
 
-@binwalk_printResult  # 데코레이터를 사용하여 결과 출력, 로딩창 전환을 위한 메인 윈도우 전달
+@binwalk_printResult  # 데코레이터를 사용하여 결과 출력
 def binwalk_sigScan():  # 배열로 파일 목록을 받아서 순차적으로 실행
     for file in selectedItem_list:
         print(file)
