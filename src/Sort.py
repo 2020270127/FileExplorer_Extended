@@ -10,9 +10,9 @@ from datetime import datetime
 
 * Description : sort 함수를 동작하기 위해 필요한 함수들의 집합
 
-* Change Date : 2023. 10. 08
+* Change Date : 2023. 11. 27
 
-* Version : 0.2                
+* Version : 1.0                
 
 '''
 
