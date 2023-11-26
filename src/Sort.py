@@ -1,7 +1,8 @@
 import enum
 import os
 import shutil
-
+import heapq
+import random
 from datetime import datetime
 
 '''
@@ -115,3 +116,118 @@ class name_sort:
         sorted_files = sorted(files)
 
         return sorted_files
+
+'''
+def sort_key_size(item):
+    if(item == "..." or ""):
+        return -1
+    else:
+        num_size = item.split(" ")[0]
+        unit = item.split(" ")[1]
+
+        if num_size != "":
+            if unit == 'KB':
+                return int(num_size)
+            elif unit == 'MB':
+                return int(num_size) * 1024
+            elif unit == 'GB':
+                return int(num_size) * (1024**2)
+            elif unit == 'TB':
+                return int(num_size) * (1024**3)
+        else:
+            return -1
+
+def get_size(filesize): 
+        # Not Using SI Standard (1kb = 1024byte)
+        if(0< filesize < 1024):
+            return str(filesize)+' KB' 
+        elif (1024<= filesize<1024**2):
+            return str(round(filesize/1024,2))+' MB'
+        elif (1024**2<= filesize<1024**3):
+            return str(round(filesize/(1024**2),2))+' GB'
+        elif (1024**3<= filesize<1024**4):
+            return str(round(filesize/(1024**3),2))+' TB'
+        else:
+            return ''
+
+'''
+def sort_key_size(item):
+    num_size = item[0].split(" ")[0]
+    if num_size != "":
+        return int(num_size)
+    else:
+        return -1 
+          
+def max_heapify(unsorted, index, heap_size):
+    largest = index
+    left_index = 2 * index + 1
+    right_index = 2 * index + 2
+    if left_index < heap_size and unsorted[left_index] < unsorted[largest]:
+        largest = left_index
+
+    if right_index < heap_size and unsorted[right_index] < unsorted[largest]:
+        largest = right_index
+
+    if largest != index:
+        unsorted[largest], unsorted[index] = unsorted[index], unsorted[largest]
+        max_heapify(unsorted, largest, heap_size)
+
+def min_heapify(unsorted, index, heap_size):
+    largest = index
+    left_index = 2 * index + 1
+    right_index = 2 * index + 2
+    if left_index < heap_size and unsorted[left_index] > unsorted[largest]:
+        largest = left_index
+
+    if right_index < heap_size and unsorted[right_index] > unsorted[largest]:
+        largest = right_index
+
+    if largest != index:
+        unsorted[largest], unsorted[index] = unsorted[index], unsorted[largest]
+        min_heapify(unsorted, largest, heap_size)
+
+def heap_sort(unsorted,reverse:bool = False):
+    if(not reverse):
+        n = len(unsorted)
+        for i in range(n // 2 - 1, -1, -1):
+            max_heapify(unsorted, i, n)
+        for i in range(n - 1, 0, -1):
+            unsorted[0], unsorted[i] = unsorted[i], unsorted[0]
+            max_heapify(unsorted, 0, i)
+        return unsorted
+    else:
+        n = len(unsorted)
+        for i in range(n // 2 - 1, -1, -1):
+            min_heapify(unsorted, i, n)
+        for i in range(n - 1, 0, -1):
+            unsorted[0], unsorted[i] = unsorted[i], unsorted[0]
+            min_heapify(unsorted, 0, i)
+        return unsorted
+
+def time_heap_sort(lis, reverse: bool = False):
+
+    for i in range(len(lis)):
+        tmp = int((datetime.strptime(lis[i][0],"%Y-%m-%d %I:%M")).timestamp())
+        lis[i] = (tmp,lis[i][1])
+
+    lis = heap_sort(lis,reverse)
+
+    for i in range(len(lis)):
+        tmp = datetime.fromtimestamp(lis[i][0]).strftime("%Y-%m-%d %I:%M")
+        lis[i] = (tmp,lis[i][1])
+
+    return lis
+
+def size_heap_sort(lis, reverse: bool = False):
+
+    for i in range(len(lis)):
+        tmp = sort_key_size(lis[i])
+        lis[i] = (tmp,lis[i][1])
+
+    lis = heap_sort(lis,reverse)
+
+    for i in range(len(lis)):
+        tmp = str(lis[i][0]) + " KB"
+        lis[i] = (tmp,lis[i][1])
+    
+    return lis
