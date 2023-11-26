@@ -118,15 +118,15 @@ def mv(*args):
 def file_sig(args): #파일 시그니쳐 출력 함수   ex) file_sig("filename") 
     try:
         if(os.path.isfile(args)):
-            subprocess.run(['wsl', 'python3','bin.py','file_sig' ,args])
+            subprocess.run(['wsl binwalk -B',args])
         else:
             raise Exception("파일이 아닙니다.")
     except Exception as e:
         print(f"binwalk 오류 발생: {e}")
-def file_ext(args): #파일 시그니쳐 출력 함수   ex) file_sig("filename") 
+def file_ext(args): #파일 추출 함수   ex) file_sig("filename") 
     try:
         if(os.path.isfile(args)):
-            subprocess.run(['wsl', 'python3','bin.py','file_ext' ,args])
+            subprocess.run(['wsl binwalk -e' ,args])
         else:
             raise Exception("파일이 아닙니다.")
     except Exception as e:
