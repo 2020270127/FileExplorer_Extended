@@ -19,6 +19,7 @@ import time
 # import custom functions
 import ext
 import util
+from Sort import *
 
 # TODO:
 # Linux compatibility,
@@ -229,7 +230,21 @@ def createWindow():
     root.iconphoto(False, tk.PhotoImage(file=file_path + "icon.png"))
     return root
 
-
+'''
+# LeeSo Han 
+def get_size(filesize): 
+        # Not Using SI Standard (1kb = 1024byte)
+        if(0< filesize < 1024):
+            return str(filesize)+' KB' 
+        elif (1024<= filesize<1024**2):
+            return str(round(filesize/1024,2))+' MB'
+        elif (1024**2<= filesize<1024**3):
+            return str(round(filesize/(1024**2),2))+' GB'
+        elif (1024**3<= filesize<1024**4):
+            return str(round(filesize/(1024**3),2))+' TB'
+        else:
+            return ''
+'''
 def refresh(queryNames):
     global fileNames, folderIcon, fileIcon, items, cwdLabel, footer
     # Refresh Header
@@ -252,7 +267,7 @@ def refresh(queryNames):
             # modification time of file
             fileDateModified.append(
                 datetime.fromtimestamp(os.path.getmtime(fileNames[i])).strftime(
-                    "%d-%m-%Y %I:%M"
+                    "%Y-%m-%d %I:%M"
                 )
             )
             # size of file
@@ -260,7 +275,8 @@ def refresh(queryNames):
                 round(os.stat(fileNames[i]).st_size / 1024)
             )  # str->round->size of file in KB
             fileSizesSum += int(fileSizes[i])
-            fileSizes[i] = str(round(os.stat(fileNames[i]).st_size / 1024)) + " KB"
+            fileSizes[i] = str(fileSizes[i]) + " KB"
+            #fileSizes[i] = get_size(int(fileSizes[i]))
             # check file type
             ext.extensions(fileTypes, fileNames, i)
 
@@ -546,10 +562,11 @@ def create_widgets(window):
     items.column("Date modified", anchor=tk.CENTER, width=200, minwidth=120)
     items.column("Size", anchor=tk.CENTER, width=80, minwidth=60)
     items.column("Type", anchor=tk.CENTER, width=120, minwidth=60)
+
     items.heading(
         "Name",
         text="Name",
-        anchor=tk.CENTER,
+        anchor=tk.W,
         command=partial(sort_col, "Name", False),
     )
     items.heading(
@@ -817,12 +834,14 @@ def create_widgets(window):
 def sort_col(col, reverse):
     global items
     l = [(items.set(k, col), k) for k in items.get_children("")]
-    if col == "Name" or col == "Type":
+    if col == "Name":
         l.sort(reverse=reverse)
     elif col == "Date modified":
-        l = sorted(l, key=sort_key_dates, reverse=reverse)
+        l = time_heap_sort(l, reverse=reverse)
     elif col == "Size":
-        l = sorted(l, key=sort_key_size, reverse=reverse)
+        l = size_heap_sort(l, reverse=reverse)
+    elif col == "Type":
+        l = heap_sort(l, reverse=reverse)
 
     # rearrange items in sorted positions
     for index, (val, k) in enumerate(l):
@@ -833,7 +852,7 @@ def sort_col(col, reverse):
 
 
 def sort_key_dates(item):
-    return datetime.strptime(item[0], "%d-%m-%Y %I:%M")
+    return datetime.strptime(item[0], "%Y-%m-%d %I:%M")
 
 
 def sort_key_size(item):
