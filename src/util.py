@@ -276,3 +276,18 @@ def virus_scan(file_name):
     except Exception as e:
         print(f"An error occurred: {str(e)}")
 
+def convert_windows_path_to_wsl(windows_path): #os.path는 cmd 형태로 넣어야하고, binwalk는 wsl 형태로 넣어야 하기에 해당 파일에 선언.
+    drive = windows_path[0].lower()
+    path = windows_path[3:].replace('\\', '/')
+    return f"/mnt/{drive}/{path}"
+
+def cbinwalk(functions, file, result):
+    try:
+        if(os.path.isfile(file)):
+            result.append("Filename : " + f'{file}')
+            result.append(subprocess.run(['wsl', 'binwalk', f'{functions}', f'{convert_windows_path_to_wsl(file)}'], text=True, capture_output=True).stdout)
+            print('wsl' + 'binwalk' + f'{functions}' + f'{file}')
+        else:
+            raise Exception("파일이 아닙니다")      
+    except Exception as e:
+        print(f"binwalk 오류 발생: {e}")

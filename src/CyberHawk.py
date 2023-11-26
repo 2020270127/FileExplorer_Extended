@@ -18,7 +18,7 @@ import requests
 import time
 # import custom functions
 import ext
-import Cbinwalk
+import util
 
 # TODO:
 # Linux compatibility,
@@ -46,11 +46,9 @@ footer = 0
 src_list = []  # 전역 변수: 붙여넣기할 항목 경로를 저장하는 리스트
 selectedItem_list = []  # 전역 변수: 복사할 항목을 저장하는 리스트
 format_scan_info = [] # 선택한 파일의 포맷/확장자 스캔 결과를 저장하는 리스트
-
 files = ['1', '2', '3']  # binwalk를 사용할 파일 목록들, 절대경로/상대경로/파일명 모두 가능.
 binwalk_result = []  # binwalk 결과를 저장할 리스트
 q = queue.Queue()  # binwalk 로딩창을 위해 생성한 큐
-
 script_path = os.path.abspath(__file__)# virusScan apiKey.txt 생성 위치 지정을 위한 변수
 script_folder = os.path.dirname(script_path)#virusScan apiKey.txt 생성 위치 지정을 위한 변수
 # available themes
@@ -65,15 +63,6 @@ literaL = "litera"  # default theme
 mintyL = "minty"
 morphL = "morph"
 yetiL = "yeti"
-
-
-# binwalk options
-# scan_var = None
-# extract_var = None
-# entropy_var = None
-# binwalk_arg = None
-# extract_b_arg = None
-# entropy_b_arg = None
 
 # 파일 시그니처와 파일 확장자를 쌍으로 미리 저장
 # 텍스트 파일의 형식은 별도의 처리를 위해 따로 저장
@@ -986,7 +975,7 @@ def binwalk_sigScan():  # 배열로 파일 목록을 받아서 순차적으로 �
     for file in selectedItem_list:
         print(file)
         q.put("Scanning " + f'{file}' + " ...")
-        Cbinwalk.cbinwalk(f'{(scan_var).get()}' + f'{(scan_arg).get()}', file, binwalk_result)  # tk 객체에서 get 메서드로 값을 가져옴
+        util.cbinwalk(f'{(scan_var).get()}' + f'{(scan_arg).get()}', file, binwalk_result)  # tk 객체에서 get 메서드로 값을 가져옴
     q.put("job end")
 
 
@@ -994,7 +983,7 @@ def binwalk_sigScan():  # 배열로 파일 목록을 받아서 순차적으로 �
 def binwalk_extract():
     for file in selectedItem_list:
         q.put("Extracting " + f'{file}' + " ...")
-        Cbinwalk.cbinwalk(f'{(extract_var).get()}' + f'{(extract_arg).get()}', file, binwalk_result)
+        util.cbinwalk(f'{(extract_var).get()}' + f'{(extract_arg).get()}', file, binwalk_result)
     q.put("job end")
 
 
@@ -1002,7 +991,7 @@ def binwalk_extract():
 def binwalk_entropy():
     for file in selectedItem_list:
         q.put("Analyzing " + f'{file}' + " ...")
-        Cbinwalk.cbinwalk(f'{(entropy_var).get()}', file, binwalk_result)
+        util.cbinwalk(f'{(entropy_var).get()}', file, binwalk_result)
     q.put("job end")
 
 
