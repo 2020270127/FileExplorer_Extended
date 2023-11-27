@@ -149,7 +149,6 @@ def checkPlatform():
         available_drives = "/"
         currDrive = available_drives
 
-# TODO: implement comparing system, show all hash(sha256)
 def hashExtract(window):
     global items
     hash_result = []
@@ -206,6 +205,7 @@ def hashExtract(window):
         Label(result_window, text="SHA256").grid(row=2, column=0)
         Label(result_window, text="SHA1").grid(row=3, column=0)
 
+
         # 검사 대상이 된 모든 파일/폴더 이름 출력
         for col, hr in enumerate(hash_result):
             i, hashes = hr
@@ -213,7 +213,14 @@ def hashExtract(window):
             Label(result_window, wraplength=400, text=f"Result of: {i}", font=("TkDefaultFont", "10", "bold")).grid(row=0, column=col+1)
             Label(result_window, wraplength=400, text=hashes['md5']).grid(row=1, column=col+1)
             Label(result_window, wraplength=400, text=hashes['sha256']).grid(row=2, column=col+1)
-            Label(result_window, wraplength=400, text=hashes['sha1']).grid(row=3, column=col+1)
+            Label(result_window, wraplength=400, text=hashes['sha1']).grid(row=3, column=col+1)        
+
+        # 2개 선택한 경우 같은지, 다른지 확인
+        if len(selectedItem_list) == 2:
+            if hash_result[0][1]['sha256'] == hash_result[1][1]['sha256']:
+                Label(result_window,text="Two files are the same", font=("TkDefaultFont", "10", "bold")).grid(row=4, column=1, columnspan=2)
+            else:
+                Label(result_window,text="Two files are different", font=("TkDefaultFont", "10", "bold")).grid(row=4, column=1, columnspan=2)
 
     # 파일이나 폴더가 선택되지 않은 경우
     else:
