@@ -1479,10 +1479,12 @@ def virus_scan():
 
                             if 'scans' in report_result:
                                 count = 0
+                                str_msg=""
                                 for antivirus, scan_result in report_result['scans'].items():
                                     if scan_result['detected']:
-                                        tk.messagebox.showinfo("Scan Result", f"{antivirus}: Detected, Result: {scan_result['result']}")
+                                        str_msg+=f"{antivirus}: Detected, Result: {scan_result['result']}\n"
                                         count += 1
+                                tk.messagebox.showinfo("Scan Result", str_msg)
 
                                 if count == 0:
                                     tk.messagebox.showinfo("Scan Result", "Not detected")
