@@ -1482,7 +1482,7 @@ def virus_scan():
                                 str_msg=""
                                 for antivirus, scan_result in report_result['scans'].items():
                                     if scan_result['detected']:
-                                        str_msg+=f"{antivirus}: Detected, Result: {scan_result['result']}\n"
+                                        str_msg+=f"{antivirus}: Detected\n Result: {scan_result['result']}\n"
                                         count += 1
                                 tk.messagebox.showinfo("Scan Result", str_msg)
 
