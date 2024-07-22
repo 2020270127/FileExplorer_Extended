@@ -1,6 +1,5 @@
 import os
 import tkinter as tk
-from tkinter import Toplevel, Label, messagebox, simpledialog
 from datetime import datetime
 from functools import partial
 from sys import platform
@@ -12,15 +11,15 @@ from ttkbootstrap.tooltip import ToolTip
 from ttkbootstrap.dialogs.dialogs import Messagebox
 from ttkbootstrap.dialogs.dialogs import Querybox
 import psutil
-import hashlib
-import requests
-import time
+
 
 # import custom functions
 import ext
 from sort import * # for sorting
 from binwalk import * # for binwalk operation
 from format_scan import * # for file signature
+from hash_extract import * # for file hashing
+from virustotal import * # for virustotal search
 from config import * 
 
 class FileExplorer:
@@ -42,8 +41,7 @@ class FileExplorer:
     footer = 0
     src_list = []  # 전역 변수: 붙여넣기할 항목 경로를 저장하는 리스트
 
-script_path = os.path.abspath(__file__) # virusScan apiKey.txt 생성 위치 지정을 위한 변수
-script_folder = os.path.dirname(script_path) #virusScan apiKey.txt 생성 위치 지정을 위한 변수
+
 
 class FileExplorerTheme:
     # available themes
@@ -59,10 +57,6 @@ class FileExplorerTheme:
     morphL = "morph"
     yetiL = "yeti"
 
-
-
-
-
 def checkPlatform():
     global currDrive, available_drives
     if platform == "win32":
@@ -74,94 +68,13 @@ def checkPlatform():
         available_drives = "/"
         currDrive = available_drives
 
-def hashExtract(window):
-    global items
-    hash_result = []
-
-    if selectedItem_list:
-        if len(selectedItem_list) > 2:
-            Messagebox.show_info(
-                message="Only 1 or 2 items are permitted. Sorry!", title="Error!"
-            )
-            return
-
-        for file in selectedItem_list:
-            # 디렉토리인 경우 (해싱 불가능)
-            if os.path.isdir(file):
-                Messagebox.show_info(
-                    message="Hashing files are only possible."+file+"is a file", title="Info"
-                )
-                break
-            # 파일인 경우
-            elif os.path.isfile(file):
-                try:
-                    with open(file, mode='rb') as f:
-                        md5_hash = hashlib.md5()
-                        sha256_hash = hashlib.sha256()
-                        sha1_hash = hashlib.sha1()
-
-                        while True:
-                            data = f.read(65536)  # 파일을 64KB 블록으로 읽음
-                            if not data:
-                                break
-
-                            md5_hash.update(data)
-                            sha256_hash.update(data)
-                            sha1_hash.update(data)
-
-                        # 해시 값을 16진수로 반환
-                        hashes = {
-                            'md5': md5_hash.hexdigest(),
-                            'sha256': sha256_hash.hexdigest(),
-                            'sha1': sha1_hash.hexdigest()
-                        }
-                        hash_result.append([file, hashes])
-                    
-                except Exception as e:
-                    print('Error Message:', e)
-
-        
-        # 최종 결과 출력
-        result_window = Toplevel(window)
-        result_window.title = "Hash Extract Result"
-
-        Label(result_window, text="Hash Type", font=("TkDefaultFont", "10", "bold")).grid(row=0, column=0)
-        Label(result_window, text="MD5").grid(row=1, column=0)
-        Label(result_window, text="SHA256").grid(row=2, column=0)
-        Label(result_window, text="SHA1").grid(row=3, column=0)
-
-
-        # 검사 대상이 된 모든 파일/폴더 이름 출력
-        for col, hr in enumerate(hash_result):
-            i, hashes = hr
-            i = i.split('/')[-1]
-            Label(result_window, wraplength=400, text=f"Result of: {i}", font=("TkDefaultFont", "10", "bold")).grid(row=0, column=col+1)
-            Label(result_window, wraplength=400, text=hashes['md5']).grid(row=1, column=col+1)
-            Label(result_window, wraplength=400, text=hashes['sha256']).grid(row=2, column=col+1)
-            Label(result_window, wraplength=400, text=hashes['sha1']).grid(row=3, column=col+1)        
-
-        # 2개 선택한 경우 같은지, 다른지 확인
-        if len(selectedItem_list) == 2:
-            if hash_result[0][1]['sha256'] == hash_result[1][1]['sha256']:
-                Label(result_window,text="Two files are the same", font=("TkDefaultFont", "10", "bold")).grid(row=4, column=1, columnspan=2)
-            else:
-                Label(result_window,text="Two files are different", font=("TkDefaultFont", "10", "bold")).grid(row=4, column=1, columnspan=2)
-
-    # 파일이나 폴더가 선택되지 않은 경우
-    else:
-        Messagebox.show_info(
-            message="There is no selected file.", title="Error!"
-        )
-
 def createWindow():
     root = ttk.Window(themename=theme)
     root.title("CyberHawk")
     root.geometry("1280x720")
     root.resizable(True, True)
     root.iconphoto(False, tk.PhotoImage(file=file_path + "icon.png"))
-
     
-
     return root
 
 def refresh(queryNames):
@@ -478,25 +391,25 @@ def create_widgets(window):
         "Name",
         text="Name",
         anchor=tk.W,
-        command=partial(sort_col, "Name", False),
+        command=partial(sort_col, items, "Name", False),
     )
     items.heading(
         "Date modified",
         text="Date modified",
         anchor=tk.CENTER,
-        command=partial(sort_col, "Date modified", False),
+        command=partial(sort_col, items, "Date modified", False),
     )
     items.heading(
         "Type",
         text="Type",
         anchor=tk.CENTER,
-        command=partial(sort_col, "Type", False),
+        command=partial(sort_col, items, "Type", False),
     )
     items.heading(
         "Size",
         text="Size",
         anchor=tk.CENTER,
-        command=partial(sort_col, "Size", False),
+        command=partial(sort_col, items, "Size", False),
     )
     items.bind(
         "<Double-1>",
@@ -595,12 +508,6 @@ def create_widgets(window):
     binwalk_menu.add_command(
         label="Entropy Calculator", image=network_photo, compound="left", command=binwalk_entropy_calculate
     )
-    # binwalk_menu.add_command(
-    #     label="Configuration",
-    #     image=process_photo,
-    #     compound="left",
-    #     command=partial(binwalk_config, window),  # 설정 창은 partial로 window 부모 전달
-    # )
 
     ## 포맷 스캔 메뉴 생성 ##
     format_menu = ttk.Menu(bar, tearoff=False, font=("TkDefaultFont", font_size))
@@ -613,12 +520,13 @@ def create_widgets(window):
     hash_extract_menu.add_command(
         label="HashExtract", image=info_photo, compound="left", command=partial(hashExtract, window)
     )
-#####################################################################################
-    virusScan_menu = ttk.Menu(bar, tearoff=False, font=("Virus_scan", font_size)) #virusScan
+
+    ## virusScan 메뉴 생성 ##
+    virusScan_menu = ttk.Menu(bar, tearoff=False, font=("Virus_scan", font_size)) 
     virusScan_menu.add_command(
         label="VirusScan",
         compound="left",
-        command=virus_scan,
+        command=partial(virus_scan, selectedItem_list)
     )    
     virusScan_menu.add_command(
         label="ApiKey",
@@ -686,10 +594,11 @@ def create_widgets(window):
     bar.add_cascade(label="Binwalk", menu=binwalk_menu, underline=0)  # binwalk 상단바
     bar.add_cascade(label="Format", menu=format_menu, underline=0)  # format scan 상단바
     bar.add_cascade(label="HashExtract", menu=hash_extract_menu, underline=0)  # format scan 상단바
+    bar.add_cascade(label="VirusScan", menu=virusScan_menu,underline=0) # virusScan 상단바
     bar.add_cascade(label="Preferences", menu=preferences_menu, underline=0)
     bar.add_cascade(label="Help", menu=help_menu, underline=0)
     bar.add_cascade(label="About", menu=about_menu, underline=0)
-    bar.add_cascade(label="VirusScan", menu=virusScan_menu,underline=0) #virusScan
+
 
     # --Menu bar
 
@@ -741,37 +650,6 @@ def create_widgets(window):
     window.bind("<Control-v>", wrap_paste)
     window.bind("<Control-Shift-N>", wrap_new_dir)
 
-
-def sort_col(col, reverse):
-    global items
-    l = [(items.set(k, col), k) for k in items.get_children("")]
-    if col == "Name":
-        l.sort(reverse=reverse)
-    elif col == "Date modified":
-        l = time_heap_sort(l, reverse=reverse)
-    elif col == "Size":
-        l = size_heap_sort(l, reverse=reverse)
-    elif col == "Type":
-        l = heap_sort(l, reverse=reverse)
-
-    # rearrange items in sorted positions
-    for index, (val, k) in enumerate(l):
-        items.move(k, "", index)
-
-    # reverse sort next time
-    items.heading(col, command=partial(sort_col, col, not reverse))
-
-
-def sort_key_dates(item):
-    return datetime.strptime(item[0], "%Y-%m-%d %I:%M")
-
-
-def sort_key_size(item):
-    num_size = item[0].split(" ")[0]
-    if num_size != "":
-        return int(num_size)
-    else:
-        return -1  # if it's a directory, give it negative size value, for sorting
 
 
 def write_theme(theme):
@@ -1194,83 +1072,6 @@ def read_font():
     if font_size == "":  # if font.txt is empty, set default font
         font_size = 10
 
-#virusScan
-def apiKeySetting():
-    apiKeyResult = simpledialog.askstring("Input", "Please enter your VirusTotal API key:")
-    if apiKeyResult!=None:
-        f=open(script_folder+"/"+'apiKey.txt',mode='w')
-        f.write(apiKeyResult)
-        f.close()
-def get_api_key():
-    apiKeyFile='apiKey.txt'
-    if os.path.exists(script_folder+"/"+'apiKey.txt'):
-        f=open(script_folder+"/"+'apiKey.txt',mode='r')
-        apiKeyResult=f.read()
-        f.close()
-        return apiKeyResult
-    else:
-        apiKeyResult = simpledialog.askstring("Input", "Please enter your VirusTotal API key:")
-        if apiKeyResult!=None:
-            f=open(script_folder+"/"+'apiKey.txt',mode='w')
-            f.write(apiKeyResult)
-            f.close()
-            return apiKeyResult
-        else:
-            return apiKeyResult
-def virus_scan():
-    global selectedItem_list
-    if len(selectedItem_list)==1:
-        upload_url = 'https://www.virustotal.com/vtapi/v2/file/scan'
-        api_key = get_api_key()
-        if api_key !=None:    
-            file_path = os.path.join(os.getcwd(), selectedItem_list[0])
-            report_url = 'https://www.virustotal.com/vtapi/v2/file/report'
-            upload_files = {'file': (file_path, open(file_path, 'rb'))}
-            upload_params = {'apikey': api_key}
-
-            try:
-                upload_response = requests.post(upload_url, files=upload_files, params=upload_params)
-
-                if upload_response.status_code == 200:
-                    upload_result = upload_response.json()
-                    scan_id = upload_result.get('scan_id')
-
-                    if scan_id:
-                        messagebox.showinfo("Success", f"File uploaded successfully.")
-                        time.sleep(10)
-
-                        report_params = {'apikey': api_key, 'resource': scan_id}
-                        report_response = requests.get(report_url, params=report_params)
-
-                        if report_response.status_code == 200:
-                            report_result = report_response.json()
-
-                            if 'scans' in report_result:
-                                count = 0
-                                str_msg=""
-                                for antivirus, scan_result in report_result['scans'].items():
-                                    if scan_result['detected']:
-                                        str_msg+=f"{antivirus}: Detected\n Result: {scan_result['result']}\n"
-                                        count += 1
-                                tk.messagebox.showinfo("Scan Result", str_msg)
-
-                                if count == 0:
-                                    tk.messagebox.showinfo("Scan Result", "Not detected")
-                            else:
-                                tk.messagebox.showinfo("Scan Result", "No scan results found.")
-                        else:
-                            tk.messagebox.showerror("Error", f"Error getting scan results: {report_response.status_code} - {report_response.text}")
-                    else:
-                        tk.messagebox.showinfo("Error", "No scan ID found in the upload response.")
-                else:
-                    tk.messagebox.showerror("Error", f"Error uploading file: {upload_response.status_code} - {upload_response.text}")
-
-            except Exception as e:
-                tk.messagebox.showerror("Error", f"An error occurred: {str(e)}")
-        else:
-            tk.messagebox.showerror("Error","ApiKey를 입력 해주세요")
-    else:
-        tk.messagebox.showerror("Error","virusScan은 한개의 파일만 선택가능합니다")
 
 
 def main():

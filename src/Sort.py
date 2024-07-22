@@ -1,9 +1,6 @@
-import enum
 import os
-import shutil
-import heapq
-import random
 from datetime import datetime
+from functools import partial
 
 '''
 * Lib name : Sort
@@ -185,7 +182,6 @@ def time_heap_sort(lis, reverse: bool = False):
     return lis
 
 def size_heap_sort(lis, reverse: bool = False):
-
     for i in range(len(lis)):
         tmp = sort_key_size(lis[i])
         lis[i] = (tmp,lis[i][1])
@@ -197,3 +193,28 @@ def size_heap_sort(lis, reverse: bool = False):
         lis[i] = (tmp,lis[i][1])
     
     return lis
+
+
+def sort_col(items, col, reverse):
+    l = [(items.set(k, col), k) for k in items.get_children("")]
+    if col == "Name":
+        l.sort(reverse=reverse)
+    elif col == "Date modified":
+        l = time_heap_sort(l, reverse=reverse)
+    elif col == "Size":
+        l = size_heap_sort(l, reverse=reverse)
+    elif col == "Type":
+        l = heap_sort(l, reverse=reverse)
+
+    # rearrange items in sorted positions
+    for index, (val, k) in enumerate(l):
+        items.move(k, "", index)
+
+    # reverse sort next time
+    items.heading(col, command=partial(sort_col, items, col, not reverse))
+
+
+def sort_key_dates(item):
+    return datetime.strptime(item[0], "%Y-%m-%d %I:%M")
+
+
