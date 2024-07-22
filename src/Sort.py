@@ -117,40 +117,6 @@ class name_sort:
 
         return sorted_files
 
-'''
-def sort_key_size(item):
-    if(item == "..." or ""):
-        return -1
-    else:
-        num_size = item.split(" ")[0]
-        unit = item.split(" ")[1]
-
-        if num_size != "":
-            if unit == 'KB':
-                return int(num_size)
-            elif unit == 'MB':
-                return int(num_size) * 1024
-            elif unit == 'GB':
-                return int(num_size) * (1024**2)
-            elif unit == 'TB':
-                return int(num_size) * (1024**3)
-        else:
-            return -1
-
-def get_size(filesize): 
-        # Not Using SI Standard (1kb = 1024byte)
-        if(0< filesize < 1024):
-            return str(filesize)+' KB' 
-        elif (1024<= filesize<1024**2):
-            return str(round(filesize/1024,2))+' MB'
-        elif (1024**2<= filesize<1024**3):
-            return str(round(filesize/(1024**2),2))+' GB'
-        elif (1024**3<= filesize<1024**4):
-            return str(round(filesize/(1024**3),2))+' TB'
-        else:
-            return ''
-
-'''
 def sort_key_size(item):
     num_size = item[0].split(" ")[0]
     if num_size != "":

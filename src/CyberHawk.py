@@ -1,6 +1,6 @@
 import os
 import tkinter as tk
-from tkinter import Toplevel, Label, Radiobutton, Button, Entry, messagebox, scrolledtext, simpledialog
+from tkinter import Toplevel, Label, messagebox, simpledialog
 from datetime import datetime
 from functools import partial
 from sys import platform
@@ -12,21 +12,16 @@ from ttkbootstrap.tooltip import ToolTip
 from ttkbootstrap.dialogs.dialogs import Messagebox
 from ttkbootstrap.dialogs.dialogs import Querybox
 import psutil
-import queue
 import hashlib
 import requests
 import time
+
 # import custom functions
 import ext
 import util
 from Sort import *
-
-# TODO:
-# Linux compatibility,
-# Add move file function,
-# break into modules,
-# editable path,
-# code improvements, refactoring
+from binwalk import *
+from config import *
 
 # globals
 fileNames = []
@@ -45,25 +40,28 @@ items = 0  # holds treeview items
 cwdLabel = 0
 footer = 0
 src_list = []  # 전역 변수: 붙여넣기할 항목 경로를 저장하는 리스트
-selectedItem_list = []  # 전역 변수: 복사할 항목을 저장하는 리스트
+
 format_scan_info = [] # 선택한 파일의 포맷/확장자 스캔 결과를 저장하는 리스트
 files = ['1', '2', '3']  # binwalk를 사용할 파일 목록들, 절대경로/상대경로/파일명 모두 가능.
-binwalk_result = []  # binwalk 결과를 저장할 리스트
-q = queue.Queue()  # binwalk 로딩창을 위해 생성한 큐
-script_path = os.path.abspath(__file__)# virusScan apiKey.txt 생성 위치 지정을 위한 변수
-script_folder = os.path.dirname(script_path)#virusScan apiKey.txt 생성 위치 지정을 위한 변수
-# available themes
-# Dark
-solarD = "solar"
-superheroD = "superhero"
-Darkly = "darkly"
-CyborgD = "cyborg"
-VaporD = "vapor"
-# Light
-literaL = "litera"  # default theme
-mintyL = "minty"
-morphL = "morph"
-yetiL = "yeti"
+
+
+
+script_path = os.path.abspath(__file__) # virusScan apiKey.txt 생성 위치 지정을 위한 변수
+script_folder = os.path.dirname(script_path) #virusScan apiKey.txt 생성 위치 지정을 위한 변수
+
+class Theme:
+    # available themes
+    # Dark
+    solarD = "solar"
+    superheroD = "superhero"
+    Darkly = "darkly"
+    CyborgD = "cyborg"
+    VaporD = "vapor"
+    # Light
+    literaL = "litera"  # default theme
+    mintyL = "minty"
+    morphL = "morph"
+    yetiL = "yeti"
 
 # 파일 시그니처와 파일 확장자를 쌍으로 미리 저장
 # 텍스트 파일의 형식은 별도의 처리를 위해 따로 저장
@@ -229,29 +227,16 @@ def hashExtract(window):
         )
 
 def createWindow():
-    # root = tk.Tk()
     root = ttk.Window(themename=theme)
     root.title("CyberHawk")
     root.geometry("1280x720")
     root.resizable(True, True)
     root.iconphoto(False, tk.PhotoImage(file=file_path + "icon.png"))
+
+    
+
     return root
 
-'''
-# LeeSo Han 
-def get_size(filesize): 
-        # Not Using SI Standard (1kb = 1024byte)
-        if(0< filesize < 1024):
-            return str(filesize)+' KB' 
-        elif (1024<= filesize<1024**2):
-            return str(round(filesize/1024,2))+' MB'
-        elif (1024**2<= filesize<1024**3):
-            return str(round(filesize/(1024**2),2))+' GB'
-        elif (1024**3<= filesize<1024**4):
-            return str(round(filesize/(1024**3),2))+' TB'
-        else:
-            return ''
-'''
 def refresh(queryNames):
     global fileNames, folderIcon, fileIcon, items, cwdLabel, footer
     # Refresh Header
@@ -510,14 +495,6 @@ def create_widgets(window):
     delete_img = Image.open(file_path + "delete.png")
     delete_photo = ImageTk.PhotoImage(delete_img)
 
-    # Right click menu
-    # b = ttk.Menu(window, tearoff=False, font=("TkDefaultFont", font_size))
-    # b.add_command(
-    #     label="New file", image=file_photo, compound="left", command=new_file_popup
-    # )
-    # b.add_command(
-    #     label="New directory", image=dir_photo, compound="left", command=new_dir_popup
-    # )
     m = ttk.Menu(window, tearoff=False, font=("TkDefaultFont", font_size))
     m.add_command(
         label="Open",
@@ -683,20 +660,20 @@ def create_widgets(window):
     ## binwalk 메뉴 생성 ##
     binwalk_menu = ttk.Menu(bar, tearoff=False, font=("TkDefaultFont", font_size))
     binwalk_menu.add_command(
-        label="Signature Scanner", image=cpu_photo, compound="left", command=binwalk_sigScan
+        label="Signature Scanner", image=cpu_photo, compound="left", command=binwalk_signiture_scan
     )
     binwalk_menu.add_command(
-        label="Extractor", image=memory_photo, compound="left", command=binwalk_extract
+        label="Extractor", image=memory_photo, compound="left", command=binwalk_extract_file
     )
     binwalk_menu.add_command(
-        label="Entropy Calculator", image=network_photo, compound="left", command=binwalk_entropy
+        label="Entropy Calculator", image=network_photo, compound="left", command=binwalk_entropy_calculate
     )
-    binwalk_menu.add_command(
-        label="Configuration",
-        image=process_photo,
-        compound="left",
-        command=partial(binwalk_config, window),  # 설정 창은 partial로 window 부모 전달
-    )
+    # binwalk_menu.add_command(
+    #     label="Configuration",
+    #     image=process_photo,
+    #     compound="left",
+    #     command=partial(binwalk_config, window),  # 설정 창은 partial로 window 부모 전달
+    # )
 
     ## 포맷 스캔 메뉴 생성 ##
     format_menu = ttk.Menu(bar, tearoff=False, font=("TkDefaultFont", font_size))
@@ -724,18 +701,18 @@ def create_widgets(window):
 #####################################################################################
 
     sub_themes = ttk.Menu(bar, tearoff=False, font=("TkDefaultFont", font_size))
-    sub_themes.add_command(label="Darkly", command=partial(write_theme, Darkly))
-    sub_themes.add_command(label="Solar Dark", command=partial(write_theme, solarD))
+    sub_themes.add_command(label="Darkly", command=partial(write_theme, Theme.Darkly))
+    sub_themes.add_command(label="Solar Dark", command=partial(write_theme, Theme.solarD))
     sub_themes.add_command(
-        label="Superhero Dark", command=partial(write_theme, superheroD)
+        label="Superhero Dark", command=partial(write_theme, Theme.superheroD)
     )
-    sub_themes.add_command(label="Cyborg Dark", command=partial(write_theme, CyborgD))
-    sub_themes.add_command(label="Vapor Dark", command=partial(write_theme, VaporD))
+    sub_themes.add_command(label="Cyborg Dark", command=partial(write_theme, Theme.CyborgD))
+    sub_themes.add_command(label="Vapor Dark", command=partial(write_theme, Theme.VaporD))
     sub_themes.add_separator()
-    sub_themes.add_command(label="Litera Light", command=partial(write_theme, literaL))
-    sub_themes.add_command(label="Minty Light", command=partial(write_theme, mintyL))
-    sub_themes.add_command(label="Morph Light", command=partial(write_theme, morphL))
-    sub_themes.add_command(label="Yeti Light", command=partial(write_theme, yetiL))
+    sub_themes.add_command(label="Litera Light", command=partial(write_theme, Theme.literaL))
+    sub_themes.add_command(label="Minty Light", command=partial(write_theme, Theme.mintyL))
+    sub_themes.add_command(label="Morph Light", command=partial(write_theme, Theme.morphL))
+    sub_themes.add_command(label="Yeti Light", command=partial(write_theme, Theme.yetiL))
 
     sub_font_size = ttk.Menu(bar, tearoff=False, font=("TkDefaultFont", font_size))
     sub_font_size.add_command(label="14", command=partial(change_font_popup, 14))
@@ -950,141 +927,6 @@ def cpu_stats():
                 + " GHz",
         title="CPU",
     )
-
-
-## 결과값을 출력하는 함수 ##
-def binwalk_printResult(func):
-    def load_window():
-        global binwalk_result  # 전역 변수 binwalk_result
-        binwalk_result.clear()  # 이전에 불러온 결과 비우기
-        ## 로딩 창 생성 ##
-        loading_window = Toplevel()
-        loading_window.title("Working Status")
-        loading_window.attributes('-topmost', True)
-        load_area = scrolledtext.ScrolledText(loading_window, wrap=tk.WORD, width=80, height=20)
-        load_area.pack(padx=10, pady=10)
-
-        ## 결과 창 생성 ##
-        result_window = Toplevel()
-        result_window.title("Result")
-        result_window.withdraw()
-        result_area = scrolledtext.ScrolledText(result_window, wrap=tk.WORD, width=80, height=20)
-        result_area.pack(padx=10, pady=10)
-
-        ## 로드 창 파괴 직전에 결과창 로드 ##
-        def on_loading_close():
-            result_window.deiconify()
-            for result in binwalk_result:
-                result_area.insert(tk.END, result + '\n')
-            result_area.configure(state='disabled')
-
-        threading.Thread(target=lambda: func()).start()  # 결과값 로드를 위해 스레드로 독립 실행
-
-        ## 로딩 창 로직, 큐로 상태를 전달받음 ##
-        def update_progress():
-            if not q.empty():
-                message = q.get()
-                load_area.insert(tk.END, message + '\n')
-                load_area.yview(tk.END)
-                if message == "job end":  # 큐에 job end가 있을 경우
-                    on_loading_close()  # 창 파괴 전에 실행하도록 설정
-                    loading_window.destroy()  # loading_window 파괴
-                    return
-            result_window.after(100, update_progress)  # 100ms 후에 다시 업데이트
-
-        update_progress()
-
-    return load_window
-
-@binwalk_printResult  # 데코레이터를 사용하여 결과 출력
-def binwalk_sigScan():  # 배열로 파일 목록을 받아서 순차적으로 실행
-    for file in selectedItem_list:
-        print(file)
-        q.put("Scanning " + f'{file}' + " ...")
-        util.cbinwalk(f'{(scan_var).get()}' + f'{(scan_arg).get()}', file, binwalk_result)  # tk 객체에서 get 메서드로 값을 가져옴
-    q.put("job end")
-
-
-@binwalk_printResult
-def binwalk_extract():
-    for file in selectedItem_list:
-        q.put("Extracting " + f'{file}' + " ...")
-        util.cbinwalk(f'{(extract_var).get()}' + f'{(extract_arg).get()}', file, binwalk_result)
-    q.put("job end")
-
-
-@binwalk_printResult
-def binwalk_entropy():
-    for file in selectedItem_list:
-        q.put("Analyzing " + f'{file}' + " ...")
-        util.cbinwalk(f'{(entropy_var).get()}', file, binwalk_result)
-    q.put("job end")
-
-
-def binwalk_config(window):
-    ## 창 생성 ##
-    settings_window = Toplevel(window)
-    settings_window.title = ("BinWalk Configuration")
-
-    ## 배열 생성 ##
-    Label(settings_window, text="Scan Options:").grid(row=1, column=0, sticky='w')
-    Radiobutton(settings_window, text="Scan target file(s) for common file signatures", variable=scan_var, value="-B").grid(row=2, column=0, sticky='w')
-    Radiobutton(settings_window, text="Scan target file(s) for the specified sequence of bytes <ARGUMENT REQUIRED>", variable=scan_var, value="-R").grid(row=3, column=0, sticky='w')
-    Radiobutton(settings_window, text="Scan target file(s) for common executable opcode signatures", variable=scan_var, value="-A").grid(row=4, column=0, sticky='w')
-    Radiobutton(settings_window, text="Disable smart signature keywords", variable=scan_var, value="-b").grid(row=5, column=0, sticky='w')
-    Radiobutton(settings_window, text="Show results marked as invalid", variable=scan_var, value="-l").grid(row=6, column=0, sticky='w')
-    Radiobutton(settings_window, text="Exclude results that match <ARGUMENT REQUIRED>", variable=scan_var, value="-x").grid(row=7, column=0, sticky='w')
-    Radiobutton(settings_window, text="Only show results that match <ARGUMENT REQUIRED>", variable=scan_var, value="-y").grid(row=8, column=0, sticky='w')
-    Label(settings_window, text="Argument:").grid(row=13, column=0, sticky='w')
-    Entry(settings_window, textvariable=scan_arg).grid(row=13, column=1, sticky='w')
-
-    Label(settings_window, text="Extract Options:").grid(row=1, column=1, sticky='w')
-    Radiobutton(settings_window, text="Automatically extract known file types", variable=extract_var, value="-e").grid(row=2, column=1, sticky='w')
-    Radiobutton(settings_window, text="Recursively scan extracted files", variable=extract_var, value="-M").grid(row=3, column=1, sticky='w')
-    Radiobutton(settings_window, text="Limit matryoshka recursion depth (default: 8 levels deep)", variable=extract_var, value="-d").grid(row=4, column=1, sticky='w')
-    Radiobutton(settings_window, text="Extract files/folders to a custom directory (default: current working directory)", variable=extract_var, value="-C").grid(row=5, column=1, sticky='w')
-    Radiobutton(settings_window, text="Limit the size of each extracted file <ARGUMENT REQUIRED>", variable=extract_var, value="-j").grid(row=6, column=1, sticky='w')
-    Radiobutton(settings_window, text="Limit the number of extracted files <ARGUMENT REQUIRED>", variable=extract_var, value="-n").grid(row=7, column=1, sticky='w')
-    Radiobutton(settings_window, text="Execute external extraction utilities with the specified user's privileges <ARGUMENT REQUIRED>", variable=extract_var, value="-0").grid(row=8, column=1, sticky='w')
-    Radiobutton(settings_window, text="Do not sanitize extracted symlinks that point outside the extraction directory (dangerous)", variable=extract_var, value="-1").grid(row=9, column=1, sticky='w')
-    Radiobutton(settings_window, text="Delete carved files after extraction", variable=extract_var, value="-r").grid(row=10, column=1, sticky='w')
-    Radiobutton(settings_window, text="Carve data from files, but don't execute extraction utilities", variable=extract_var, value="-z").grid(row=11, column=1, sticky='w')
-    Radiobutton(settings_window, text="Extract into sub-directories named by the offset", variable=extract_var, value="-V").grid(row=12, column=1, sticky='w')
-    Label(settings_window, text="Extract Options:").grid(row=13, column=2, sticky='e')
-    Entry(settings_window, textvariable=extract_arg).grid(row=13, column=3, sticky='w')
-
-    ## 설정 저장 버튼 ##
-    set_button = Button(settings_window, text="SET", command=lambda: binwalk_config_save(settings_window, scan_var.get(), extract_var.get(), scan_arg.get(), extract_arg.get()))  # Button은 함수 이름만 받기 때문에, lambda를 사용하여 인자를 준 함수를 호출
-    set_button.grid(row=13, column=5, sticky='e')
-
-
-def binwalk_config_save(settings_window, scan_option, extract_option, scan_arg, extract_arg):
-    ## default 값이 없는 옵션들 예외처리 ##
-    if (scan_option == "-R" and not scan_arg) or (scan_option == "-x" and not scan_arg) or (scan_option == "-y" and not scan_arg) or (extract_option == "-j" and not extract_arg) or (extract_option == "-n" and not extract_arg) or (extract_option == "-0" and not extract_arg):
-        ## 에러 출력 후 설정창이 꺼지지 않게 하기 위한 로직 ##
-        was_topmost = settings_window.winfo_ismapped()  # 현재 설정 창이 표시되고 있으면
-        settings_window.withdraw()  # withdraw()로 설정 창 숨기기
-
-        messagebox.showerror("Error", "Argument for the option(s) are REQUIRED!")
-
-        settings_window.deiconify()  # withdraw()로 숨긴 창 복구
-
-        if was_topmost:
-            settings_window.attributes('-topmost', 1)  # topmost 인자를 1로 설정하므로서 최상위 창으로 복구
-        settings_window.focus_force()  # 포커스 강제 지정
-
-        return
-
-    ## default 값이 있는 옵션들 예외처리 ##
-    elif (extract_option == "-d" and not extract_arg) or (extract_option == "-C" and not extract_arg):
-        if (extract_option == "-d"):
-            extract_arg = "8"
-        elif (extract_option == "-C"):
-            extract_arg = os.getcwd()  # 현재 경로
-        pass
-
-    settings_window.destroy()  # 설정 창 닫기
-
 
 def memory_stats():
     memory_per = psutil.virtual_memory().percent
@@ -1415,7 +1257,7 @@ def read_theme():
     with open(file_path + "../res/theme.txt") as f:  # closes file automatically
         theme = f.readline()
     if theme == "":  # if theme.txt is empty, set default theme
-        theme = literaL
+        theme = Theme.literaL
 
 
 def read_font():
@@ -1432,7 +1274,6 @@ def apiKeySetting():
         f=open(script_folder+"/"+'apiKey.txt',mode='w')
         f.write(apiKeyResult)
         f.close()
-
 def get_api_key():
     apiKeyFile='apiKey.txt'
     if os.path.exists(script_folder+"/"+'apiKey.txt'):
@@ -1504,27 +1345,17 @@ def virus_scan():
     else:
         tk.messagebox.showerror("Error","virusScan은 한개의 파일만 선택가능합니다")
 
-
 def main():
-    global file_path, scan_var, extract_var, entropy_var, scan_arg, extract_arg, binwalk_result, q
+    global file_path
     file_path = os.path.join(os.path.dirname(__file__), "../icons/")
+   
     checkPlatform()
     read_theme()
     read_font()
     root = createWindow()
-
-    # binwalk default args, 창 생성 후 초기화
-    scan_var = tk.StringVar(value="-B")
-    extract_var = tk.StringVar(value="-e")
-    entropy_var = tk.StringVar(value="-E")
-    scan_arg = tk.StringVar()
-    extract_arg = tk.StringVar()
-
     create_widgets(root)
-
     refresh([])
     root.mainloop()
-
 
 if __name__ == "__main__":
     main()

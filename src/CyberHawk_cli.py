@@ -1,13 +1,3 @@
-#[TITLE] Utility
-#[DESC] CyberHawk에서 사용하는 기능들 구현
-#       현재 기능: ls, mkdir, rm, touch, cp, mv
-#[Writer] 
-
-import enum
-import os
-import shutil
-
-# import from util.py
 from util import *
 
 if __name__ == "__main__":

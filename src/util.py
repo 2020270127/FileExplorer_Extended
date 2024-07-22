@@ -280,11 +280,11 @@ def convert_windows_path_to_wsl(windows_path): #os.path는 cmd 형태로 넣어�
     path = windows_path[3:].replace('\\', '/')
     return f"/mnt/{drive}/{path}"
 
-def cbinwalk(functions, file, result):
+def append_binwalk_result(binwalk_functions, target_file, binwalk_result):
     try:
-        if(os.path.isfile(file)):
-            result.append("Filename : " + f'{file}')
-            result.append(subprocess.run(['wsl', 'binwalk', f'{functions}', f'{convert_windows_path_to_wsl(file)}'], text=True, capture_output=True).stdout)
+        if(os.path.isfile(target_file)):
+            binwalk_result.append("Filename : " + f'{target_file}')
+            binwalk_result.append(subprocess.run(['wsl', 'binwalk', f'{binwalk_functions}', f'{convert_windows_path_to_wsl(target_file)}'], text=True, capture_output=True).stdout)
         else:
             raise Exception("파일이 아닙니다")      
     except Exception as e:
