@@ -1,26 +1,22 @@
 import os
-import tkinter as tk
-from datetime import datetime
-from functools import partial
-from sys import platform
+import sys
 import shutil
 import threading
+from datetime import datetime
+from functools import partial
+import psutil
 from PIL import Image, ImageTk
+import tkinter as tk
 import ttkbootstrap as ttk
 from ttkbootstrap.tooltip import ToolTip
 from ttkbootstrap.dialogs.dialogs import Messagebox
 from ttkbootstrap.dialogs.dialogs import Querybox
-import psutil
 
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(current_dir)
+sys.path.append(project_root)
 
-# import custom functions
-import ext
-from sort import * # for sorting
-from binwalk import * # for binwalk operation
-from format_scan import * # for file signature
-from hash_extract import * # for file hashing
-from virustotal import * # for virustotal search
-from config import * 
+from extensions import *
 
 class FileExplorer:
     # globals
@@ -41,8 +37,6 @@ class FileExplorer:
     footer = 0
     src_list = []  # 전역 변수: 붙여넣기할 항목 경로를 저장하는 리스트
 
-
-
 class FileExplorerTheme:
     # available themes
     # Dark
@@ -59,7 +53,7 @@ class FileExplorerTheme:
 
 def checkPlatform():
     global currDrive, available_drives
-    if platform == "win32":
+    if sys.platform == "win32":
         available_drives = [
             chr(x) + ":" for x in range(65, 91) if os.path.exists(chr(x) + ":")
         ]  # 65-91 -> search for drives A-Z
@@ -110,7 +104,7 @@ def refresh(queryNames):
             fileSizes[i] = str(fileSizes[i]) + " KB"
             #fileSizes[i] = get_size(int(fileSizes[i]))
             # check file type
-            ext.extensions(fileTypes, fileNames, i)
+            get_extension.get_extension_type(fileTypes, fileNames, i)
 
             # insert
             if fileTypes[i] == "Directory":
@@ -155,13 +149,11 @@ def refresh(queryNames):
 def wrap_refresh(event):  # wrapper for F5 bind
     refresh([])
 
-
 def previous():
     global lastDirectory
     lastDirectory = os.getcwd()
     os.chdir("../")
     refresh([])
-
 
 def next():
     try:
@@ -169,7 +161,6 @@ def next():
         refresh([])
     except:
         return
-
 
 # open file
 def onDoubleClick(event=None):
@@ -194,7 +185,6 @@ def onDoubleClick(event=None):
         newPath = newPath.replace(tempName, "")
         os.chdir("../")
 
-
 def onRightClick(m, event):
     selectItem(event)
     if not items.identify_row(event.y):
@@ -202,18 +192,15 @@ def onRightClick(m, event):
     else:
         m.tk_popup(event.x_root, event.y_root)
 
-
 def search(searchEntry, event):
     fileNames = os.listdir()
     query = searchEntry.get()  # get query from text box
     query = query.lower()
     queryNames = []
-
     for name in fileNames:
         if name.lower().find(query) != -1:  # if query in name
             queryNames.append(name)
     refresh(queryNames)
-
 
 def create_widgets(window):
     global folderIcon, fileIcon, items, cwdLabel, footer
@@ -391,25 +378,25 @@ def create_widgets(window):
         "Name",
         text="Name",
         anchor=tk.W,
-        command=partial(sort_col, items, "Name", False),
+        command=partial(sort.sort_col, items, "Name", False),
     )
     items.heading(
         "Date modified",
         text="Date modified",
         anchor=tk.CENTER,
-        command=partial(sort_col, items, "Date modified", False),
+        command=partial(sort.sort_col, items, "Date modified", False),
     )
     items.heading(
         "Type",
         text="Type",
         anchor=tk.CENTER,
-        command=partial(sort_col, items, "Type", False),
+        command=partial(sort.sort_col, items, "Type", False),
     )
     items.heading(
         "Size",
         text="Size",
         anchor=tk.CENTER,
-        command=partial(sort_col, items, "Size", False),
+        command=partial(sort.sort_col, items, "Size", False),
     )
     items.bind(
         "<Double-1>",
@@ -500,25 +487,25 @@ def create_widgets(window):
     ## binwalk 메뉴 생성 ##
     binwalk_menu = ttk.Menu(bar, tearoff=False, font=("TkDefaultFont", font_size))
     binwalk_menu.add_command(
-        label="Signature Scanner", image=cpu_photo, compound="left", command=binwalk_signiture_scan
+        label="Signature Scanner", image=cpu_photo, compound="left", command=binwalk.binwalk_signiture_scan
     )
     binwalk_menu.add_command(
-        label="Extractor", image=memory_photo, compound="left", command=binwalk_extract_file
+        label="Extractor", image=memory_photo, compound="left", command=binwalk.binwalk_extract_file
     )
     binwalk_menu.add_command(
-        label="Entropy Calculator", image=network_photo, compound="left", command=binwalk_entropy_calculate
+        label="Entropy Calculator", image=network_photo, compound="left", command=binwalk.binwalk_entropy_calculate
     )
 
     ## 포맷 스캔 메뉴 생성 ##
     format_menu = ttk.Menu(bar, tearoff=False, font=("TkDefaultFont", font_size))
     format_menu.add_command(
-        label="Format Scan", image=cpu_photo, compound="left", command=partial(checkFileSignature, window)
+        label="Format Scan", image=cpu_photo, compound="left", command=partial(format_scan.checkFileSignature, window)
     )
 
     ## 해시 값 추출 메뉴 생성 ##
     hash_extract_menu = ttk.Menu(bar, tearoff=False, font=("TkDefaultFont", font_size))
     hash_extract_menu.add_command(
-        label="HashExtract", image=info_photo, compound="left", command=partial(hashExtract, window)
+        label="HashExtract", image=info_photo, compound="left", command=partial(hash_extract.hashExtract, window)
     )
 
     ## virusScan 메뉴 생성 ##
@@ -526,12 +513,12 @@ def create_widgets(window):
     virusScan_menu.add_command(
         label="VirusScan",
         compound="left",
-        command=partial(virus_scan, selectedItem_list)
+        command=partial(virustotal.virus_scan, config.selectedItem_list)
     )    
     virusScan_menu.add_command(
         label="ApiKey",
         compound="left",
-        command=apiKeySetting,
+        command=virustotal.apiKeySetting,
     )    
 #####################################################################################
 
@@ -650,34 +637,27 @@ def create_widgets(window):
     window.bind("<Control-v>", wrap_paste)
     window.bind("<Control-Shift-N>", wrap_new_dir)
 
-
-
 def write_theme(theme):
     with open(file_path + "../res/theme.txt", "w") as f:  # closes file automatically
         f.write(theme)
     warning_popup()
-
 
 def warning_popup():
     Messagebox.show_info(
         message="Please restart the application to apply changes.", title="Info"
     )
 
-
 def change_font_popup(size):
     warning_popup()
     change_font_size(size)
-
 
 def change_font_size(size):
     with open(file_path + "../res/font.txt", "w") as f:  # closes file automatically
         f.write(str(size))
 
-
 def change_scale(multiplier, s):
     scale = round(multiplier * 28)  # 28 is default
     s.configure("Treeview", rowheight=scale)
-
 
 def drive_stats(window):
     top = ttk.Toplevel(window)
@@ -712,7 +692,6 @@ def drive_stats(window):
     top.geometry(str(len(meters) * 200) + "x200")  # Add 200px width for every drive
     for meter in meters:
         meter.pack(side=tk.LEFT, expand=True, fill=tk.X)
-
 
 def cpu_stats():
     cpu_count_log = psutil.cpu_count()
@@ -754,7 +733,6 @@ def memory_stats():
         title="Memory",
     )
 
-
 def network_stats():
     net = psutil.net_io_counters(pernic=True)
     mes = ""
@@ -770,7 +748,6 @@ def network_stats():
                 + " GB\n\n"
         )
     Messagebox.ok(message=mes, title="Network")
-
 
 def processes_win(window):
     top = ttk.Toplevel(window)
@@ -812,7 +789,6 @@ def cd_drive(drive, queryNames):
     os.chdir(currDrive + "/")
     refresh(queryNames)
 
-
 def up_key(event):
     global selectedItem, items
     iid = items.focus()
@@ -824,9 +800,7 @@ def up_key(event):
     else:
         pass
 
-
-
-def down_key(event):
+def down_key():
     global selectedItem, items
     iid = items.focus()
     iid = items.next(iid)
@@ -837,17 +811,14 @@ def down_key(event):
     else:
         pass
 
-
-def click(searchEntry, event):
+def click(searchEntry):
     if searchEntry.get() == "Search files..":
         searchEntry.delete(0, "end")
-
 
 def FocusOut(searchEntry, window, event):
     searchEntry.delete(0, "end")
     searchEntry.insert(0, "Search files..")
     window.focus()
-
 
 def rename_popup():
     global items
@@ -864,15 +835,14 @@ def rename_popup():
             message="There is no selected file or directory.", title="Info"
         )
 
-
 def selectItem(event):
-    global selectedItem, items, selectedItem_list
+    global selectedItem, items
     iid = items.identify_row(event.y)
 
     if not iid:
         items.selection_remove(items.selection())
         items.focus('')
-        selectedItem_list.clear()
+        config.selectedItem_list.clear()
         selectedItem = None
         return
     if event.state & 0x4:  # Ctrl 키가 눌려 있는지 확인합니다.
@@ -884,14 +854,14 @@ def selectItem(event):
             selectedItem = str(selectedItem)
 
             #중복시 제거
-            if os.path.join(os.getcwd(), selectedItem) in selectedItem_list:
-                selectedItem_list.remove(os.path.join(os.getcwd(), selectedItem))
+            if os.path.join(os.getcwd(), selectedItem) in config.selectedItem_list:
+                config.selectedItem_list.remove(os.path.join(os.getcwd(), selectedItem))
                 items.selection_remove(iid)
             else:
-                selectedItem_list.append(os.path.join(os.getcwd(), selectedItem))
+                config.selectedItem_list.append(os.path.join(os.getcwd(), selectedItem))
         else:
             items.selection_clear()
-            selectedItem_list.clear()
+            config.selectedItem_list.clear()
             pass
     elif event.state & 0x1:  # Shift 키가 눌려 있는지 확인합니다.
         # Shift 키가 눌려 있으면 정렬된 순서대로 항목 범위를 선택합니다.
@@ -909,16 +879,16 @@ def selectItem(event):
             items.selection_add(selected_range)
             for item in selected_range:
                 selectedItem = items.item(item)["values"][0]
-                selectedItem_list.append(os.path.join(os.getcwd(), selectedItem))
+                config.selectedItem_list.append(os.path.join(os.getcwd(), selectedItem))
     else:
         # Ctrl 키가 눌려 있지 않으면 이전 선택을 지우고 현재 항목을 선택합니다.
         if iid:
             items.selection_set(iid)
             selectedItem = items.item(iid)["values"][0]
             items.focus(iid)  # Give focus to iid
-            selectedItem_list.clear()
+            config.selectedItem_list.clear()
             selectedItem = str(selectedItem)
-            selectedItem_list.append(os.path.join(os.getcwd(), selectedItem))
+            config.selectedItem_list.append(os.path.join(os.getcwd(), selectedItem))
         else:
             pass
 
@@ -930,13 +900,11 @@ def keybinds():
         title="Info",
     )
 
-
 def about_popup():  # popup window
     Messagebox.ok(
         message="My File Explorer\nMade by: Chris Tsouchlakis\nVersion 0.5.1",
         title="About",
     )
-
 
 def new_file_popup():
     name = Querybox.get_string(prompt="Name: ", title="New file")
@@ -948,7 +916,6 @@ def new_file_popup():
         except:
             pass
 
-
 def new_dir_popup():
     name = Querybox.get_string(prompt="Name: ", title="New directory")
     if name != "":
@@ -958,34 +925,29 @@ def new_dir_popup():
         except:
             pass
 
-
 def wrap_new_dir(event):
     new_dir_popup()
 
-
 def copy():
     global src, items
-    global selectedItem_list, src_list
-    if selectedItem_list:  # 복사할 항목이 있는지 확인합니다.
-        for selected_item in selectedItem_list:
+    global  src_list
+    if config.selectedItem_list:  # 복사할 항목이 있는지 확인합니다.
+        for selected_item in config.selectedItem_list:
             print(f"{selected_item}을(를) 대상지로 복사하는 중...")
 
-        src_list = selectedItem_list
+        src_list = config.selectedItem_list
         # 복사 후 복사한 항목 리스트를 비웁니다.
         selected_item = []
-        selectedItem_list = []
+        config.selectedItem_list = []
 
     else:
         print("복사할 항목이 선택되지 않았습니다.")
 
-
 def wrap_copy(event):  # wrapper for ctrl+c keybinds
     copy()
 
-
 def wrap_paste(event):  # wrapper for ctrl+v keybinds
     paste()
-
 
 def paste():
     global src
@@ -1023,18 +985,17 @@ def paste():
         print("붙여넣을 항목이 없습니다.")
     refresh([])
 
-
 def del_file_popup():
-    global items, selectedItem_list
-    print(selectedItem_list)
+    global items
+    print(config.selectedItem_list)
 
-    if selectedItem_list:  # if there is a focused item
+    if config.selectedItem_list:  # if there is a focused item
         answer = Messagebox.yesno(
             message="선택된 파일/폴더를 삭제하시겠습니까?",
             alert=True,
         )
         if answer == "Yes":
-            for selected_item in selectedItem_list:
+            for selected_item in config.selectedItem_list:
                 del_file(selected_item)
                 refresh([])
             refresh([])
@@ -1045,17 +1006,14 @@ def del_file_popup():
             message="삭제할 항목이 선택되지 않았습니다.", title="Info"
         )
 
-
 def wrap_del(event):  # wrapper for delete keybind
     del_file_popup()
-
 
 def del_file(selected_item):
     if os.path.isfile(selected_item):
         os.remove(selected_item)
     elif os.path.isdir(selected_item):
         shutil.rmtree(selected_item)
-
 
 def read_theme():
     global theme, file_path
@@ -1064,7 +1022,6 @@ def read_theme():
     if theme == "":  # if theme.txt is empty, set default theme
         theme = FileExplorerTheme.literaL
 
-
 def read_font():
     global font_size
     with open(file_path + "../res/font.txt") as f:  # closes file automatically
@@ -1072,12 +1029,9 @@ def read_font():
     if font_size == "":  # if font.txt is empty, set default font
         font_size = 10
 
-
-
 def main():
     global file_path
     file_path = os.path.join(os.path.dirname(__file__), "../icons/")
-   
     checkPlatform()
     read_theme()
     read_font()

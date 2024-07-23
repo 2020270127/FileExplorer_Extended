@@ -1,5 +1,5 @@
 import os
-from config import *
+from extensions.config import *
 from tkinter import Toplevel, Label
 from ttkbootstrap.dialogs.dialogs import Messagebox
 

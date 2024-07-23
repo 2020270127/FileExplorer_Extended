@@ -3,12 +3,11 @@
 #       현재 기능: ls, mkdir, rm, touch, cp, mv, file_sig, sort
 #[Writer] 
 import subprocess
-import enum
 import os
 import shutil
 import hashlib
 import requests
-import sort # sort 함수 동작을 위한 자체 제작 라이브러리
+import extensions.sort as sortLib # sort 함수 동작을 위한 자체 제작 라이브러리
 import time
 # 파일 시그니처와 파일 확장자를 쌍으로 미리 저장
 # 텍스트 파일의 형식은 별도의 처리를 위해 따로 저장
@@ -175,22 +174,22 @@ def sort(args):
 
     elif (args == mode[1]):   # size sort (파일 크기 기준 정렬)      
         current_dir = os.getcwd() 
-        files_in_current_dir = Sort.size_sort().size_list_files_in_current_dir(current_dir)
-        sorted_files = Sort.size_sort().heap_sort_by_size(files_in_current_dir)
+        files_in_current_dir = sortLib.size_sort().size_list_files_in_current_dir(current_dir)
+        sorted_files = sortLib.size_sort().heap_sort_by_size(files_in_current_dir)
         for file_name, file_size in sorted_files:
             print(file_name, end = '  ')
-            Sort.size_sort().get_size(file_size)
+            sortLib.size_sort().get_size(file_size)
 
     elif (args == mode[2]): # time sort (최종 변경 시간 기준 정렬)
         current_dir = os.getcwd()
-        files_in_current_dir = Sort.time_sort().time_list_files_in_current_dir(current_dir)
-        sorted_files = Sort.time_sort().heap_sort_by_created_time(files_in_current_dir)
+        files_in_current_dir = sortLib.time_sort().time_list_files_in_current_dir(current_dir)
+        sorted_files = sortLib.time_sort().heap_sort_by_created_time(files_in_current_dir)
         for file_name, file_modified_time in sorted_files:
             print('%-50s%20s' %(str(file_name), str(file_modified_time)))
 
     elif (args == mode[3]): # name sort(영어 기준)
         current_directory = os.getcwd()
-        sorted_file_list = Sort.name_sort().sort_files_by_name(current_directory)
+        sorted_file_list = sortLib.name_sort().sort_files_by_name(current_directory)
         for file_name in sorted_file_list:
             print(file_name)                        
     else :

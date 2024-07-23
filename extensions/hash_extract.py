@@ -1,12 +1,11 @@
 import os
 import hashlib
-from config import *
+from extensions.config import *
 from tkinter import Toplevel, Label
 from ttkbootstrap.dialogs.dialogs import Messagebox
 
 def hashExtract(window):
     hash_result = []
-
     if selectedItem_list:
         if len(selectedItem_list) > 2:
             Messagebox.show_info(

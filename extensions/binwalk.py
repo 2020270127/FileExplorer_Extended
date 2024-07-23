@@ -3,9 +3,7 @@ import queue
 import threading
 import tkinter as tk
 from tkinter import Toplevel, scrolledtext
-from config import *
-
-
+from extensions.config import *
 
 class BinwalkWindow:
     def __init__(self):
