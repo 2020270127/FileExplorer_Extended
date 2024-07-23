@@ -1,3 +1,7 @@
+"""
+Author: mindol1234
+"""
+
 import os
 from extensions.config import *
 from tkinter import Toplevel, Label

@@ -1,3 +1,6 @@
+"""
+Author: jeungsin00
+"""
 import os
 import time
 import requests

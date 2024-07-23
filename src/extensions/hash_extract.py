@@ -1,3 +1,6 @@
+"""
+Author: dubini0
+"""
 import os
 import hashlib
 from extensions.config import *

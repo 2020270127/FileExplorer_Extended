@@ -1,3 +1,6 @@
+"""
+Author: nobletem
+"""
 import os
 from datetime import datetime
 from functools import partial
@@ -13,7 +16,7 @@ from functools import partial
 
 '''
 
-class size_sort:
+class SizeSorter:
     
     def size_list_files_in_current_dir(self, current_dir):
         files = []
@@ -65,7 +68,7 @@ class size_sort:
         else:
             print(f'{filesize}byte')
 
-class time_sort:
+class ModifiedTimeSorter:
 
     def descending_heapify(self,arr, n, i):
         largest = i
@@ -105,7 +108,7 @@ class time_sort:
 
         return files
     
-class name_sort:
+class NameSorter:
 
     def sort_files_by_name(slef, directory):
         files = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]

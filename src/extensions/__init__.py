@@ -6,5 +6,6 @@ from .sort import *
 from .virustotal import *
 
 from .config import *
+from .util import *
 
-__all__ = ["binwalk", "format_scan", "get_extension", "hash_extract", "sort", "virustotal", "config"]
+__all__ = ["binwalk", "format_scan", "get_extension", "hash_extract", "sort", "virustotal", "config", "util"]

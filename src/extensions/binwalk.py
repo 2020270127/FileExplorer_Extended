@@ -1,4 +1,8 @@
-import util
+"""
+Author: 2020270127
+"""
+
+from .util import *
 import queue
 import threading
 import tkinter as tk
@@ -55,14 +59,14 @@ def binwalk_signiture_scan(binwalk_result, q):
     for file in selectedItem_list:
         print(file)
         q.put("Scanning " + f'{file}' + " ...")
-        util.append_binwalk_result('-B', file, binwalk_result)  
+        append_binwalk_result('-B', file, binwalk_result)  
     q.put("job end")
 
 @BinwalkWindow()
 def binwalk_extract_file(binwalk_result, q):
     for file in selectedItem_list:
         q.put("Extracting " + f'{file}' + " ...")
-        util.append_binwalk_result('-e', file, binwalk_result)
+        append_binwalk_result('-e', file, binwalk_result)
     q.put("job end")
 
 
@@ -70,5 +74,5 @@ def binwalk_extract_file(binwalk_result, q):
 def binwalk_entropy_calculate(binwalk_result, q):
     for file in selectedItem_list:
         q.put("Analyzing " + f'{file}' + " ...")
-        util.append_binwalk_result('-E', file, binwalk_result)
+        append_binwalk_result('-E', file, binwalk_result)
     q.put("job end")

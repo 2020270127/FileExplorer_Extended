@@ -148,7 +148,7 @@ def file_ext(args): #파일 추출 함수   ex) file_sig("filename")
 * Version : 0.2                
 
 '''
-def sort(args): 
+def custom_sort(args): 
     mode = ['format', 'size', 'time', 'name']
     current_directory = os.getcwd()
     files = os.listdir(current_directory)
@@ -174,22 +174,22 @@ def sort(args):
 
     elif (args == mode[1]):   # size sort (파일 크기 기준 정렬)      
         current_dir = os.getcwd() 
-        files_in_current_dir = sortLib.size_sort().size_list_files_in_current_dir(current_dir)
-        sorted_files = sortLib.size_sort().heap_sort_by_size(files_in_current_dir)
+        files_in_current_dir = sortLib.SizeSorter().size_list_files_in_current_dir(current_dir)
+        sorted_files = sortLib.SizeSorter().heap_sort_by_size(files_in_current_dir)
         for file_name, file_size in sorted_files:
             print(file_name, end = '  ')
-            sortLib.size_sort().get_size(file_size)
+            sortLib.SizeSorter().get_size(file_size)
 
     elif (args == mode[2]): # time sort (최종 변경 시간 기준 정렬)
         current_dir = os.getcwd()
-        files_in_current_dir = sortLib.time_sort().time_list_files_in_current_dir(current_dir)
-        sorted_files = sortLib.time_sort().heap_sort_by_created_time(files_in_current_dir)
+        files_in_current_dir = sortLib.ModifiedTimeSorter().time_list_files_in_current_dir(current_dir)
+        sorted_files = sortLib.ModifiedTimeSorter().heap_sort_by_created_time(files_in_current_dir)
         for file_name, file_modified_time in sorted_files:
             print('%-50s%20s' %(str(file_name), str(file_modified_time)))
 
     elif (args == mode[3]): # name sort(영어 기준)
         current_directory = os.getcwd()
-        sorted_file_list = sortLib.name_sort().sort_files_by_name(current_directory)
+        sorted_file_list = sortLib.NameSorter().sort_files_by_name(current_directory)
         for file_name in sorted_file_list:
             print(file_name)                        
     else :

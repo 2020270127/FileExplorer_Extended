@@ -1,4 +1,4 @@
-from util import *
+from extensions.util import *
 
 if __name__ == "__main__":
     user_input = input("어떤 명령을 수행하시겠습니까? (ls, mkdir, rm, touch, cp, mv, filehash, virus_scan): ")
